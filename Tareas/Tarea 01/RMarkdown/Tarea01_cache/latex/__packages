@@ -1,4 +1,5 @@
 base
+rmarkdown
 ggplot2
 latex2exp
 gridExtra
