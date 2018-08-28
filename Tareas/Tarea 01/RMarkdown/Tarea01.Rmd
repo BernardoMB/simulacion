@@ -1,30 +1,44 @@
 ---
-title: "Simulacion Tarea01"
-author: "Bernardo Mondragón Brozon, Karen Delgado Curiel, Rayan García Fabian"
+title: 'Simulacion: Tarea 01'
+author: "Bernardo Mondragón Brozon, Karen Delgado Curiel, Rayan Garcia Fabian"
 date: "August 28, 2018"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
+# Create beautiful graphs
+#install.packages("ggplot")
+library(ggplot2)
+# TeX expressions in graphs labels
+#install.packages("latex2exp")
+library(latex2exp)
+# Title on multiple plots
+#install.packages("grid")
+library(grid)
+# Assemble multiple plots on a page
+#install.packages("gridExtra")
+library(gridExtra)
+
+# Color?
+colorImp <- TRUE
+# Colores chidos
+moradito <- "#be58a0"
+azulito <- "#00e6e6"
 ```
 
-## R Markdown
+# Problema 1
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+x <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+probs <- pbinom(q=x, size=12, prob=1/6)
+table <- data.frame(x, probs)
+names(table) <- c("x", "Pr{X<=x}")
+library(knitr)
+kable(table, caption="Distribucion de X")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
