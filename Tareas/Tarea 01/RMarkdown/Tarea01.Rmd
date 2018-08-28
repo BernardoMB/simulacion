@@ -9,22 +9,116 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+install.packages(c("ggplot2","rmarkdown"))
+library(ggplot2)
+library(rmarkdown)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+Pregunta 1
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+Pregunta 2
+En un artículo de Wikipedia, se reportan las estaturas de los Presidentes de los Estados Unidos y los de sus oponentes en elecciones. Se ha notado
+que mientras más alto seal el presidente típicamente gana la elección.
+
+Primero introducimos los datos
+```{r}
+ano<-seq(2008,1948,-4)
+ganador<-c("Barack Obama","George W.Bush","George W.Bush","Bill Clinton","Bill Clinton","George H.W.Bush","Ronald Reagan","Ronald Reagan","Jimmy Carter","Richard Nixon","Richard Nixon","Lyndon B.Johnson","John F.Kennedy","Dwight D.Eisenhower","Dwight D.Eisenhower","Harry S.Truman")
+alturaG<-c(185,182,182,188,188,188,185,185,177,182,182,193,183,179,179,175)
+alturaO<-c(175,193,185,187,188,173,180,177,183,185,180,180,182,178,178,173)
+oponente<-c("John McCain","John Kerry","Al Gore","Bob Dole","George H.W.Bush","Michael Dukakis","Walter Mondale","Jimmy Carter","Gerald Ford","Geroge McGovern","Hubert Humphrey","Bary Goldwater","Richar Nixon","Adlai Stevenson","Adlai Stevenson","Thomas Dewey")
+```
+
+```{r}
+tabPres<-as.data.frame(cbind(ano,ganador,alturaG,oponente,alturaO))
+
+
+grafPres<-ggplot(tabPres,aes(x=alturaO,y=alturaG))+geom_point()+geom_label(label=ano, nudge_x = 0.25, nudge_y = 0.2)
+#geom_text(label=ano, nudge_x = 0.25, nudge_y = 0.2,check_overlap=T)
+
+
+grafPres
+
+```
+
+
+Pregunta 4
+
+Escriban una función en R llamada "sd.n"" que regrese el valor estimado de $$\sigma$$ de una muestra de tamaño n, utilizando la fórmula del estimado máximo verosímil de la varianza.
+
+```{r}
+estMaxVer<-function(muestra){
+  aux<-0
+  me<-mean(muestra)
+  for (i in 1:length(muestra)){
+  aux<-aux+(muestra[i]-me)^2 
+  }
+  est<-sqrt(aux/(length(muestra)-1))
+  return(est)
+}
+
+
+#Ejemplo
+m<-rnorm(1000,0,2)
+estMaxVer(m)
+```
+
+Pregunta 5
+
+Escriban una función norma que calcule la norma Euclideana de un vector numerico de longitud n. Evaluar la norma de los vectores (0, 0, 0, 1), (2, 5, 2, 4) y (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+```{r}
+NormEuc<-function(vec){
+  aux<-0
+  for (i in 1:length(vec)){
+  aux<-aux+vec[i]^2 
+  }
+  NE<-sqrt(aux)
+  return(NE)
+}
+
+#Ejemplo
+v1<-c(2, 5, 2, 4)
+NormEuc(v1)
+```
+
+Pregunta 6
+
+Usar la función "curve"" para graficar la función f(x) en el intervalo 0 ≤ x ≤ 10.Luego usar la función "integrate" para calcular el valor de la integral.
+
+```{r}
+curve(exp(-x^2)/(1+x)^2,from = 0,to=10)
+```
+
+```{r}
+f1<-function(x){
+  return(exp(-x^2)/(1+x)^2)
+}
+integrate(f1,lower = 0,upper = Inf)
+```
+
+Pregunta 7
+
+Construir una matriz con 10 renglones y 2 columnas que contienen datos provenientes de una normal estándar
+
+```{r}
+
+```
+
+Pregunta 8
+```{r}
+presion<-c(rep(35,4),rep(49.5,4),rep(70,4),rep(99,4),rep(140,4))
+factorRes<-c(112,119,117,113,108,99,112,118,120,106,102,109,110,101,99,104,100,102,96,101)
+tabHojas<-as.data.frame(cbind(presion,factorRes))
+boxplot(factorRes~presion)
+
+```
+
