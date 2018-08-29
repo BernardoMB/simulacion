@@ -1,8 +1,9 @@
 ---
 title: 'Simulacion: Tarea 01'
-author: "Bernardo Mondragón Brozon, Karen Delgado Curiel, Rayan Garcia Fabian"
+author: "Bernardo MondragÃ³n Brozon, Karen Delgado Curiel, Rayan Garcia Fabian"
 date: "August 28, 2018"
 output:
+  word_document: default
   pdf_document: default
   html_document:
     df_print: paged
@@ -144,7 +145,6 @@ hist_vs_den_2
 tablita_2 <- data.frame(c("Media", "Varianza"), c(mean(obs_2), var(obs_2)), c(0.61, 0.61))
 names(tablita_2) <- c(" ", "Simulacion", "Teoricos")
 kable(tablita_2, caption="Comparacion de los valores teoricos con los obtenidos por simulacion")
-hist(obs_2*.001)
 ```
 
 # Problema 4
