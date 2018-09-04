@@ -1,12 +1,12 @@
 ---
-title: 'Simulacion: Tarea 01'
-author: "Bernardo MondragÃ³n Brozon, Karen Delgado Curiel, Rayan Garcia Fabian"
+title: 'Tarea 1 Simulación'
+author: "Bernardo Mondragón Brozon"
 date: "August 28, 2018"
 output:
   word_document: default
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -28,29 +28,46 @@ library(gridExtra)
 library(knitr)
 
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 5)
+knitr::opts_chunk$set(fig.height = 5)
+knitr::opts_chunk$set(fig.align = "center")
 
 # Color?
 colorImp <- TRUE
 # Colores chidos
-moradito <- "#be58a0"
+primary <- "#be58a0"
 azulito <- "#00e6e6"
 ```
 
-
 # Problema 1
 
+Sea X el número de ’unos’ obtenido en 12 lanzamientos de un dado honesto. Entonces X tiene una distribución binomial. Calcular una tabla con los valores de la función de distribución para x = 0,1,...,12 por dos métodos: usando la función cumsum y usando la función pbinom. También determinar cuánto vale P(X > 7). \newline
+
+\textbf{Solución}
 ```{r}
 x <- c(1,2,3,4,5,6,7,8,9,10,11,12)
 probs <- pbinom(q=x, size=12, prob=1/6)
 table <- data.frame(x, probs)
-names(table) <- c("x", "Pr{X<=x}")
-kable(table, caption="Distribucion de X")
+names(table) <- c("x", "Probabilidad acumulada")
+kable(table, caption="Distribución de X")
 
-plot(probs, type="s", main="Distribucion de probabilidad acumulada", xlab="x", ylab="F(x)")
+ggplot(data = table, aes(x=table[,1], y=table[,2])) +
+  geom_step(color=primary, size=1) +
+  labs(x="x", y=TeX('$F_X(x)$')) +
+  ggtitle("Distribución de probabilidad acumulada") + 
+  theme(plot.title = element_text(
+    hjust = 0.5, 
+    color = "#666666", 
+    face = "bold", 
+    size = 12)
+  )
 ```
 
 # Problema 2
 
+(Estaturas de presidentes gringos). En un artículo de Wikipedia, se reportan las estaturas de los Presidentes de los Estados Unidos y los de sus oponentes en elecciones. Se ha notado que mientras más alto seal el presidente típicamente gana la elección. Hagan una gráfica de dispersión de puntos con la estatura del perdedor vs. el ganador. \newline
+
+\textbf{Solución}
 ```{r}
 df <- read.csv("../HeightData.csv", sep=",", header = TRUE)
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
@@ -72,24 +89,31 @@ for (i in 1:length(df$Height)) {
 df <- data.frame(df$Year, df$Winner, winners_heights, df$Opponent, losers_heights)
 names(df) <- c("Year", "Winner", "W.Height", "Opponent", "O.Height")
 scatter_plot <- ggplot(data=df, mapping=aes(x=O.Height, y=W.Height)) +
-  #geom_point(color=moradito) +
+  #geom_point(color=primary) +
   geom_hline(aes(yintercept=mean(df$W.Height))) + 
   geom_vline(aes(xintercept=mean(df$O.Height))) +
   geom_label(label=df$Year, nudge_x = 1.5, nudge_y = 1.5) +
-  stat_function(fun=function(x) {x}, size=1, color=moradito) +
+  stat_function(fun=function(x) {x}, size=1, color=primary) +
   ylim(c(173, 195)) +
   xlim(c(173, 195)) +
-  labs(x="Oponentes", y="Ganadores") +
+  labs(x="Oponentes", y="Ganadores", caption="La línea morada es la recta 
+       de 45° y las \n líneas negras son las medias de las variables") +
   ggtitle("Ganadores vs. oponentes") + 
-  theme(plot.title = element_text(hjust = 0.5, color = "#666666", face = "bold", size = 12))
+  theme(plot.title = element_text(
+    hjust = 0.5, 
+    color = "#666666", 
+    face = "bold", 
+    size = 12))
 scatter_plot
 ```
 
-Las lineas rectas en el grafico anterior respresentan las medias.
-
 # Problema 3
 
-## Con n = 1000
+La función rpois genera observaciones aleatorias de una distribución Poisson. Usen la función rpois para simular un número grande (n=1000 y n=1000) muestras Poisson con parámetro $\lambda$ = 0.61. Encuentren la función de masa de probabilidad, media, y varianza para las muestras. Comparen con los valores teóricos de la densidad Poisson. \newline
+
+\textbf{Solución} \newline
+
+Con n = 1000
 
 ```{r}
 obs_1 <- rpois(n=1000, lambda=0.61)
@@ -102,23 +126,29 @@ df_pois <- data.frame(vals, xs)
 hist_vs_den <- ggplot() +
   geom_hline(yintercept = 0, size = .5) +
   geom_vline(xintercept = 0, size = .5) +
-  labs(x = TeX('$x$'), y = TeX('$p_X(x)$')) +
+  labs(x = TeX('$x$'), y = TeX('$p_X(x)$'), caption="La línea morada es la 
+       media empírica y la negra es la media teórica") +
   ggtitle("Densidad vs histograma de valores simulados") +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_vline(aes(xintercept=0.61)) +
-  geom_vline(aes(xintercept=mean(obs_1)), color=moradito) +
+  geom_vline(aes(xintercept=mean(obs_1)), color=primary) +
   xlim(0,10) +
   ylim(0,0.6) +
-  geom_histogram(data=df_1, aes(x=obs_1, y=.001*..count..), breaks=seq(1, 10, by=0.5), color=moradito, fill=moradito, alpha=0.5) +
+  geom_histogram(data=df_1, aes(x=obs_1, y=.001*..count..), 
+                 breaks=seq(1, 10, by=0.5), 
+                 color=primary, fill=primary, alpha=0.5) +
   geom_point(data=df_pois, aes(x=xs, y=vals))
 hist_vs_den
 
-tablita <- data.frame(c("Media", "Varianza"), c(mean(obs_1), var(obs_1)), c(0.61, 0.61))
-names(tablita) <- c(" ", "Simulacion", "Teoricos")
-kable(tablita, caption="Comparacion de los valores teoricos con los obtenidos por simulacion")
+tablita <- data.frame(
+  c("Media", "Varianza"),
+  c(mean(obs_1), var(obs_1)), c(0.61, 0.61))
+names(tablita) <- c(" ", "Simulación", "Teóricos")
+kable(tablita, caption="Comparación de los valores 
+      teóricos con los obtenidos por simulación")
 ```
 
-## Con n = 10000
+Con n = 10000
 
 ```{r}
 obs_2 <- rpois(n=10000, lambda=0.61)
@@ -131,24 +161,32 @@ df_pois_2 <- data.frame(vals_2, xs_2)
 hist_vs_den_2 <- ggplot() +
   geom_hline(yintercept = 0, size = .5) +
   geom_vline(xintercept = 0, size = .5) +
-  labs(x = TeX('$x$'), y = TeX('$p_X(x)$')) +
+  labs(x = TeX('$x$'), y = TeX('$p_X(x)$'), caption="La línea morada es la media 
+       empírica y la negra es la media teórica") +
   ggtitle("Densidad vs histograma de valores simulados") +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_vline(aes(xintercept=0.61)) +
-  geom_vline(aes(xintercept=mean(obs_2)), color=moradito) +
+  geom_vline(aes(xintercept=mean(obs_2)), color=primary) +
   # xlim(0,10) +
   # ylim(0,20) +
-  geom_histogram(data=df_2, aes(x=obs_2, y=.0001*..count..), breaks=seq(1, 10, by=0.5), color=moradito, fill=moradito, alpha=0.5) +
+  geom_histogram(data=df_2, 
+                 aes(x=obs_2, y=.0001*..count..), 
+                 breaks=seq(1, 10, by=0.5), color=primary, 
+                 fill=primary, alpha=0.5) +
   geom_point(data=df_pois_2, aes(x=xs_2, y=vals_2))
 hist_vs_den_2
 
 tablita_2 <- data.frame(c("Media", "Varianza"), c(mean(obs_2), var(obs_2)), c(0.61, 0.61))
-names(tablita_2) <- c(" ", "Simulacion", "Teoricos")
-kable(tablita_2, caption="Comparacion de los valores teoricos con los obtenidos por simulacion")
+names(tablita_2) <- c(" ", "Simulación", "Teóricos")
+kable(tablita_2, caption="Comparación de los valores 
+      teóricos con los obtenidos por simulación")
 ```
 
 # Problema 4
 
+Escriban una función en R llamada sd.n que regrese el valor estimado de $\hat\sigma$ de una muestra de tamaño n, utilizando la fórmula del estimado máximo verosímil de la varianza. \newline
+
+\textbf{Solución}
 ```{r}
 sd.n <- function(muestra) {
   aux <- 0
@@ -164,32 +202,58 @@ sd.n(muestra)
 
 # Problema 5
 
-```{r}
-norma <- function(vec) sqrt(sum(vec^2))
+Escriban una función norma que calcule la norma Euclideana de un vector numérico de longitud n. Evaluar la norma de los vectores (0,0,0,1), (2,5,2,4) y (1,2,3,4,5,6,7,8,9,10). \newline
 
+\textbf{Solución}
+```{r}
+vectorToString <- function(vec) {
+  str <- paste("(", vec[1], sep="")
+  for (i in 2:length(vec)) {
+    str <- paste(str, ", ", vec[i], sep="")
+  }
+  str <- paste(str, ")", sep="")
+  return(str)
+}
+norma <- function(vec) sqrt(sum(vec^2))
 vec1 <- c(0,0,0,1)
 vec2 <- c(2,5,2,4)
 vec3 <- c(1,2,3,4,5,6,7,8,9,10)
+vecData <- data.frame(
+  vectors=c(vectorToString(vec1), vectorToString(vec2), vectorToString(vec3)), 
+  norms=c(norma(vec1), norma(vec2), norma(vec3)))
+names(vecData) <- c("Vector", "Norma")
+kable(vecData)
 
-norma(vec1)
-norma(vec2)
-norma(vec3)
 ```
 
 
 # Problema 6
 
-Usar la funcion curve para graficar la funcion f(x) en el intervalo 0 <= x <= 10. Luego usar la funcion integrate para caulcular el valor de la integral.
+Usar la función curve para graficar la función f(x)=e-x2/(1+x2) en el intervalo $[0, 10]$. Luego usar la función integrate para calcular el valor de la integral
+$$ \int_0^\infty \frac{e^{-x^2}}{1+x^2} \mathrm{dx}  $$
+El límite superior se especifica usando el argumento upper=Inf en la función integrate. \newline
 
+\textbf{Solución}
 ```{r}
 myFunction <- function(x) exp(-x^2)/(1+x)^2
-curve(myFunction, from=0, to=10, n=20, type="o", col=moradito, xlab="x", ylab=TeX('exp(-x^2)/(1+x)^2'), main="Una curva")
+curve(myFunction, 
+      from=0, to=10, 
+      n=20, type="o", 
+      col=primary, 
+      xlab="x", 
+      ylab=TeX('exp(-x^2)/(1+x)^2'), 
+      main="Una curva")
 integrate(myFunction,lower=0, upper=Inf)
 ```
 
 
 # Problema 7
 
+Construir una matriz con 10 renglones y 2 columnas que contienen datos provenientes de una normal estándar:
+$$x <- matrix(rnorm(20),10,2)$$
+Esta es una muestra de 10 observaciones de una distribución normal bivariada. Usen la función apply y la función norma que crearon en un ejercicio anterior para calcular las normas euclideanas para cada una de las 10 observaciones. \newline
+
+\textbf{Solución}
 ```{r}
 x <- matrix(data=rnorm(n=20), nrow = 10, ncol = 2)
 apply(x, 1, norma)
@@ -198,13 +262,33 @@ apply(x, 1, norma)
 
 # Problema 8
 
+Los siguientes datos describen el factor de desgaste de papel manufacturado bajo diferentes presiones durante el prensado. Cuatro hojas de papel fueron seleccionadas y probadas para cada uno de los cinco lotes manufacturados:
+
+|  Presión (lotes)| Factor de resistencia (hojas)|
+|--:|----------------------:|
+|  35.0|              112 119 117 113|
+|  49.5|              108 99 112 118|
+|  70.0|              120 106 102 109|
+|  99.0|              110 101 99 104|
+|  140.0|              100 102 96 101|
+
+Metan estos datos en un dataframe con dos variables: factor de resistencia y presion. Hacer un boxplot para comparar los diferentes factores de resistencia para cada presión. \newline
+
+\textbf{Solución}
 ```{r}
-presion<-c(rep(35,4),rep(49.5,4),rep(70,4),rep(99,4),rep(140,4))
-factorRes<-c(112,119,117,113,108,99,112,118,120,106,102,109,110,101,99,104,100,102,96,101)
-tabHojas<-as.data.frame(cbind(presion,factorRes))
-boxplot(factorRes~presion)
+presion <- c(rep(35,4),rep(49.5,4),rep(70,4),rep(99,4),rep(140,4))
+factorRes <- c(112,119,117,113,108,99,112,118,120,106,102,109,110,101,99,104,100,102,96,101)
+sheetsData <- data.frame(presion,factorRes)
+bxplt <- ggplot(data=sheetsData, aes(x = as.factor(presion), y = factorRes)) +
+  geom_boxplot() + 
+  labs(x = "Presión", y = "Factor de desgaste", 
+       caption="Los puntos morados son las medias") +
+  theme(plot.title = element_text(
+    hjust = 0.5, 
+    color = "#666666", 
+    face = "bold", 
+    size = 12)) +
+  stat_summary(fun.y = mean, colour = primary, geom = "point", shape = 18, size = 3) +
+  ggtitle("Boxplots")
+bxplt
 ```
-
-# Problema 9
-
-

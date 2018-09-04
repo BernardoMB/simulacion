@@ -68,74 +68,77 @@ mm1 <- function(lambdaA = 15, lambdaS = 10, n = 100) {
 #' @examples
 #' inicializa(16, 15, 100)
 #' inicializa(n = 50, lambdaA = 10, lambdas = 30)
-inicializa  <- function(lambdaA, lambdaS, n){
-  lambdaA  <<- lambdaA   # media del de llegadas
-  lambdaS  <<- lambdaS   # tiempo promedio de servicio
-  n        <<- n          # El número de clientes en el sistema que se consideran antes de detener la simulación
-  num_eventos <<- 2       # número de eventos distintos (llegadas y salidas)
-  lt_A     <<- vector(mode="numeric", length = 1) #inicializa el vector para guardar los tiempos de arribo
-  reloj    <<- 0             # inicializa reloj de simulación
-  servidor <<- 0          # inicializa variables de estado 0 = libre, 1= ocupado
-  q_t      <<- 0 
-  tiempo_ultimo_evento <<- 0
+inicializa  <- function(lambdaA, lambdaS, n) {
+  lambdaA  <<- lambdaA   # Media de la distribución de llegadas
+  lambdaS  <<- lambdaS   # Tiempo promedio de servicio
+  n        <<- n         # El número de clientes en el sistema que se consideran antes de detener la simulación
+  num_eventos <<- 2      # Número de eventos distintos (llegadas y salidas)
+  lt_A     <<- vector(mode="numeric", length = 1) # Inicializa el vector para guardar los tiempos de arribo
+  reloj    <<- 0         # Inicializa reloj de simulación
+  servidor <<- 0         # Inicializa el estado del servidor 0 = libre, 1 = ocupado
+  q_t      <<- 0         # Inizializa la logitud de la cola
+  tiempo_ultimo_evento <<- 0 # Inicializa el tiempo del evento más reciente
   
-  #incializa los contadores estadísticos
-  clientes_enespera <<- 0
-  total_esperas     <<- 0
-  area_q            <<- 0
-  area_status_servidor <<- 0
+  # Incializa los contadores estadísticos
+  clientes_enespera <<- 0     # Inicializa el número de clientes en espera
+  total_esperas     <<- 0     # Inicializa el total D de esperas para todos los clientes 
+  area_q            <<- 0     # Inicializa la variable auxiliar para calcular la logitud promedio de la cola
+  area_status_servidor <<- 0  # Inicializa la variable auxiliar para calcular la utilización del servidor
   
-  #inicializa la lista de eventos: el primer arribo y el tiempo de salida. Se asigna un tiempo de salida muy grande, ya que no hay
-  #clientes esperando. Con esto se garantiza que el siguiente evento sea una llegada.
+  # Inicializa la lista de eventos: el primer arribo y el tiempo de salida.
+  # Se asigna un tiempo de salida muy grande, ya que no hay clientes esperando.
+  # Con esto se garantiza que el siguiente evento sea una llegada, pues no será la salida de la primera llegada.
   tiempo_sig_evento <<- c(reloj + rexp(1, 1/lambdaA), 1e30)
-  le <<- c(e=reloj,tipo=0,q=q_t)
+  # Inicializa la lista de eventos con su tiempo y su tipo
+  le <<- c(e=reloj, tipo=0, q=q_t)
 }
 
-
-# Esta función se usa para comparar el tiempo_sig_evento[1] (llegadas) y 
-# tiempo_sig_evento[2] (salidas) y 
-# definir sig_tipo_evento que sea igual al mínimo de esos dos. DespuÃ©s avanza el reloj 
-# de simulación al tiempo de ocurrencia del tipo de evento escogido, min_tiempo_sig_evento.
-tiempo <- function(){
-  min_tiempo_sig_evento <<- 1e29  #valor inicial del mínimo
+#' Esta función se usa para comparar el tiempo_sig_evento[1] (llegadas) y 
+#' tiempo_sig_evento[2] (salidas) y definir sig_tipo_evento que sea
+#' igual al mínimo de esos dos. Después avanza el reloj de simulación
+#' al tiempo de ocurrencia del tipo de evento escogido, min_tiempo_sig_evento.
+#' @return void
+#' @examples
+#' tiempo()
+tiempo <- function() {
+  min_tiempo_sig_evento <<- 1e29  # valor inicial del mínimo
   sig_tipo_evento <<- 0
-  
-  #Determina el tipo de evento del siguiente evento a ocurrir (una llegada o una salida)
-  #de acuerdo a su tamaÃ±o
-  for(i in 1:num_eventos){
-    if( tiempo_sig_evento[i] < min_tiempo_sig_evento ){
+  # Determina el tipo de evento del siguiente evento a ocurrir (una llegada o una salida)
+  # de acuerdo a su tamaño
+  for (i in 1:num_eventos) {
+    if (tiempo_sig_evento[i] < min_tiempo_sig_evento) {
       min_tiempo_sig_evento <<- tiempo_sig_evento[i]
       sig_tipo_evento <<- i
     }
   }
-  
-  #verifica si la lista de eventos está vacía
-  if(sig_tipo_evento == 0) 
+  # Verifica si la lista de eventos está vacía
+  if (sig_tipo_evento == 0) {
     stop(print(paste("La lista de eventos está vacía en el tiempo:", reloj, sep=" ")))
-  
-  #La lista de eventos no está vacía, avanza el reloj de simulación
+  }
+  # La lista de eventos no está vacía, avanza el reloj de simulación
   reloj <<- min_tiempo_sig_evento
-  le <<- rbind(le,c(reloj,sig_tipo_evento,q=q_t))
+  # Agrega elemento a la lista
+  le <<- rbind(le, c(reloj, sig_tipo_evento,q=q_t))
 }
 
 
-llegadas <- function(){
-  tiempo_sig_evento[1] <<- reloj + rexp(1, 1/lambdaA) #Programa un evento de llegada
-  if(servidor == 1){
-    q_t <<- q_t + 1 #aumenta la cola en 1
-    lt_A[q_t] <<- reloj  #guarda el tiempo de llegada de este cliente en la lista de eventos.
+llegadas <- function() {
+  tiempo_sig_evento[1] <<- reloj + rexp(1, 1/lambdaA) # Programa un evento de llegada
+  if (servidor == 1) {
+    q_t <<- q_t + 1 # Aumenta la cola en 1
+    lt_A[q_t] <<- reloj # Guarda el tiempo de llegada de este cliente en la lista de eventos
   } else {
     Di <<- 0
     total_esperas <<- total_esperas + Di
     clientes_enespera <<- clientes_enespera + 1
     servidor <<- 1 
-    tiempo_sig_evento[2] <<- reloj + rexp(1, 1/lambdaS) #tiempo de salida
+    tiempo_sig_evento[2] <<- reloj + rexp(1, 1/lambdaS) # Tiempo de salida
   }
 }
 
 
 #Esta Función sigue el diagrama de flujo que vimos en clase.
-salidas <- function(){
+salidas <- function() {
   if(q_t == 0){
     servidor <<- 0
     tiempo_sig_evento[2] <<-  1e30
@@ -150,7 +153,7 @@ salidas <- function(){
 }
 
 #Función de reporte
-reporte <- function(){
+reporte <- function() {
   print(paste("Promedio de espera en la fila:", round(total_esperas/clientes_enespera, 2), "minutos", sep=" "))
   print(paste("Número promedio de clientes esperando en la fila:", round(area_q/reloj, 2), sep = " "))
   print(paste("Utilización del servidor:", 100*round(area_status_servidor/reloj, 2), "%", sep = " "))
@@ -164,7 +167,7 @@ reporte <- function(){
 
 
 #Función de actualización de estadísticas
-actualiza_estadisticas <- function(){
+actualiza_estadisticas <- function() {
   tiempo_desde_ultimo_evento <<- reloj - tiempo_ultimo_evento
   tiempo_ultimo_evento <<-  reloj
   area_q <<- area_q + q_t * tiempo_desde_ultimo_evento
