@@ -1,6 +1,6 @@
 ---
-title: "Tarea 02 Simulacion"
-author: "Bernardo Mondrag�n Brozon"
+title: "Tarea 2 Simulación"
+author: "Bernardo Mondraón Brozon"
 date: "4 de septiembre de 2018"
 output: pdf_document
 ---
@@ -9,22 +9,148 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Problema 1
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Probar por inducción matemática que para un GLC,
+$$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m$$
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+\textbf{Demostración:}
 
-```{r cars}
-summary(cars)
+Para $i=0$ se tiene que
+$$\begin{aligned}
+  Z_0 &= Z_0 \quad \mathrm{mod} \quad m  \\
+            &= a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
+\end{aligned}$$
+
+y para $i=1$ se tiene que
+$$\begin{aligned}
+  Z_1 &= aZ_0 + c  \quad \mathrm{mod} \quad m  \\
+      &= a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
+\end{aligned}$$
+
+Procediendo por indución, se supone válido para $i$ de manera que 
+$$\begin{aligned}
+  Z_{i+1} &= aZ_i + c  \quad \mathrm{mod} \quad m  \\
+      &= a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
+      &= a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
+\end{aligned}$$
+
+Por lo tanto es váido para toda $i\in\mathbb{N}$.
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 2
+
+¿Qué se puede decir del periodo de $Z_i=630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
+
+\textbf{Solución:}
+
+Se puede decir que su periodo es inferor a $2^{31}-1$.
+
+# Problema 3
+
+Sin calcular ninguna $Z_i$, determinar cuál de los siguientes GLC’s mixtos tienen periodo completo. 
+
+\begin{itemize}
+\item[a)] $Z_i=13Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
+\item[b)] $Z_i=12Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
+\item[c)] $Z_i=13Z_{i-1} + 12 \quad \mathrm{mod} \quad 16$.
+\item[d)] $Z_i=Z_{i-1} + 12 \quad \mathrm{mod} \quad 13$.
+\item[e)] El GLC con pará metros: $a=2,814,749,767,109$, $c=59,482,661,568,307$, $m=248$.
+\end{itemize}
+
+\textbf{Solución:}
+
+```{r, warning=FALSE, message=FALSE}
+#install.packages("numbers")
+library(numbers)
+#install.packages("gmp")
+library(gmp)
+check <- function(a, c, m) {
+  condition1Holds <- coprime(c,m)
+  # Descomponer en factores primos a m
+  primes <- factorize(m)
+  condition2Holds <- FALSE
+  # Check if any prime factor also divides a-1
+  for (i in 1:length(primes)) {
+    if (a %% primes[i] == 1) {
+      condition2Holds <- TRUE
+      break
+    }
+  }
+  condition3Holds <- TRUE
+  if (m %% 4 == 0) {
+    if (!a %% 4 == 1) {
+      condition3Holds <- FALSE
+    } 
+  }
+  #return(condition1Holds && condition2Holds && condition3Holds)
+  if (condition1Holds && condition2Holds && condition3Holds) {
+    print("El generador lineal congruencial tiene periodo completo")
+    return(TRUE)
+  } else {
+    print("El generador lineal congruencial no tiene periodo completo")
+    return(FALSE)
+  }
+}
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+\begin{itemize}
+\item[a)] $Z_i=13Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
+\end{itemize}
+```{r}
+check(13,13,16)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+\begin{itemize}
+\item[b)] $Z_i=12Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
+\end{itemize}
+```{r}
+check(12,13,16)
+```
+
+\begin{itemize}
+\item[c)] $Z_i=13Z_{i-1} + 12 \quad \mathrm{mod} \quad 16$.
+\end{itemize}
+```{r}
+check(13,12,16)
+```
+
+\begin{itemize}
+\item[d)] $Z_i=Z_{i-1} + 12 \quad \mathrm{mod} \quad 13$.
+\end{itemize}
+```{r}
+check(1,12,13)
+```
+
+\begin{itemize}
+\item[e)] El GLC con pará metros: $a=2,814,749,767,109$, $c=59,482,661,568,307$, $m=248$.
+\end{itemize}
+```{r}
+check(2814749767109,59482661568307,248)
+```
+
+# Problema 4
+
+Mostrar que el promedio de las $U_i$’s tomadas de un ciclo completo de un GLC de periodo completo es $\frac{1}{2}-\frac{1}{2m}$.
+
+# Problema 5
+
+Generar 10,000 números uniformemente distribuidos entre 0 y 1 en Excel. Hacer un breve estudio para probar la calidad de los generadores; aplicar las pruebas de uniformidad e independencia a cada conjunto de datos. Resumir resultados en NO MAS de 2 cuartillas, incluyendo gráficas. De acuerdo a tus resultados, ¿cómo calificarías al generador de Excel?
+
+\textbf{Solución:}
+
+## Pruebas de bondad de ajuste
+
+```{r}
+df = read.csv("../uniformNumbers.csv", sep="", header = TRUE)
+unifs <- df$Unif
+```
+
+
+
+
+
