@@ -6,7 +6,9 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+library(latex2exp)
+library(ggplot2)
 ```
 
 # Problema 1
@@ -88,43 +90,38 @@ check <- function(a, c, m) {
   }
   #return(condition1Holds && condition2Holds && condition3Holds)
   if (condition1Holds && condition2Holds && condition3Holds) {
-    print("El generador lineal congruencial tiene periodo completo")
-    return(TRUE)
+    return("El generador lineal congruencial tiene periodo completo")
+    #return(TRUE)
   } else {
-    print("El generador lineal congruencial no tiene periodo completo")
-    return(FALSE)
+    return("El generador lineal congruencial no tiene periodo completo")
+    #return(FALSE)
   }
 }
 ```
 
-
 \begin{itemize}
 \item[a)] $Z_i=13Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
 \end{itemize}
-```{r}
-check(13,13,16)
-```
+
+`r check(13,13,16)`
 
 \begin{itemize}
 \item[b)] $Z_i=12Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
 \end{itemize}
-```{r}
-check(12,13,16)
-```
+
+`r check(12,13,16)`
 
 \begin{itemize}
 \item[c)] $Z_i=13Z_{i-1} + 12 \quad \mathrm{mod} \quad 16$.
 \end{itemize}
-```{r}
-check(13,12,16)
-```
+
+`r check(13,12,16)`
 
 \begin{itemize}
 \item[d)] $Z_i=Z_{i-1} + 12 \quad \mathrm{mod} \quad 13$.
 \end{itemize}
-```{r}
-check(1,12,13)
-```
+
+`r check(1,12,13)`
 
 \begin{itemize}
 \item[e)] El GLC con pará metros: $a=2,814,749,767,109$, $c=59,482,661,568,307$, $m=248$.
@@ -150,7 +147,141 @@ df = read.csv("../uniformNumbers.csv", sep="", header = TRUE)
 unifs <- df$Unif
 ```
 
+A continuación se muestra la gráfica de la distribución empírica de los valores generados con Excel y la gráfica de la distribución uniforme en el intervalo $[0,1]$:
+
+```{r, fig.width=4, fig.height=3, fig.align = "center"}
+labels <- c("Empírica", "Teórica")
+ggplot() +
+  stat_function(data=data.frame(type="2"), 
+                fun = function(x) x, 
+                size=1.2, 
+                aes(1, group=type, color=type, linetype=type)) +
+  stat_ecdf(data=data.frame(unifs, type="1"),
+            geom = "step", 
+            aes(unifs, group=type,  color=type, linetype=type)) +
+  ggtitle("Teórica vs empírica") +
+  labs(x=TeX("x"), y=TeX("F_n(x) & F(x)")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_colour_manual(
+    values=c("green", "black"),
+    labels = labels
+  ) + 
+  scale_linetype_manual(
+    values = c(1,6),
+    labels = labels
+  ) +
+  scale_size_manual(
+    values = c(1,2),
+    labels = labels
+  )
+```
+
+Se realizará la prueba de Kolmogorov-Smirnov (prueba de bondad de ajuste) a los valores simulados para determinar si efectivamente provienen de la distribucion uniforme en el intervalo $[0,1]$. Para realizar la prueba se contrastaran las siguientes hipótesis:
+$$H_0:F(x)=x\quad \forall x \quad \mathrm{vs.} \quad H_1:F(x)\neq x \quad \mathrm{para} \; \mathrm{alguna} \; x $$
+Entonces la estadística de prueba está dada por 
+$$ D_n=\max_x{|F_n(x)-x|}. $$
+Se rechazará la hipótesis $H_0$ si $D_n$ es muy grande. En este caso, la estadística de prueba toma el siguiente valor
+
+```{r}
+unif_ord <- sort(unifs, decreasing = FALSE)
+Dp <- max(1:length(unif_ord)/length(unif_ord)-unif_ord)
+Dm <- max(unif_ord-0:(length(unif_ord)-1)/length(unif_ord))
+Dmax <- max(Dp,Dm)
+```
+
+$$D_n = `r Dmax`$$
+
+El valor p correspondiente al valor de la estadística de prueba está dado por 
+
+```{r}
+pval <- 2*exp(-2*length(unif_ord)*Dmax^2)
+```
+
+$$\textrm{p-value} = `r pval`$$
+En este caso el valor p es mayor a 1 porque se calculó mediante una aproximación, sin embargo el verdadero valor es muy cercano a 1, de manera que no se rechaza la hipótesis de que los números aleatorios provienen de la distribución uniforme.
+
+```{r}
+#install.packages("goftest")
+library(goftest)
+CvMtest <- cvm.test(unifs, null = "punif")
+CvMtestStatistic <- CvMtest$statistic
+CvMpVal <- CvMtest$p.value
+```
 
 
+Aplicando la prueba de Crámer-von Misses se obtiene el siguiente valor de la estadística de prueba:
+
+$$W_n=n\int_{-\infty}^{\infty}\left(F_n(x)-F(x)\right)^2\mathrm{d}F(x)=10000\int_{-\infty}^{\infty}\left(F_n(x)-x\right)^2\mathrm{d}x=`r CvMtestStatistic`.$$
+
+De manera que el valor p está dado por 
+
+$$\textrm{p-value} = `r CvMpVal`$$
+
+```{r}
+ADtest <- ad.test(unifs, null = "punif")
+ADtestStatistic <- ADtest$statistic
+ADpVal <- ADtest$p.value
+```
 
 
+Aplicando la prueba de Anderson-Darling se obtiene el siguiente valor de la estadística de prueba:
+
+$$A^2_n=n\int_{-\infty}^{\infty}\frac{\left(F_n(x)-F(x)\right)^2}{F(x)\left(1-F(x)\right)}\mathrm{d}F(x)=10000\int_{-\infty}^{\infty}\frac{\left(F_n(x)-x\right)^2}{x\left(1-x\right)}\mathrm{d}x=`r ADtestStatistic`$$
+
+De manera que el valor p está dado por 
+
+$$\textrm{p-value} = `r ADpVal`$$
+
+A continuación se muestra el histograma de los datos generados en Excel y la función de densidad uniforme en el intervalo $[0,1]$:
+
+```{r, fig.width=4, fig.height=3, fig.align = "center"}
+breaks <- seq(0, 1, by=.1)
+ggplot() +
+  geom_histogram(data=df, aes(x=df$Unif, y=..density..), breaks=breaks, color="green", fill="green", alpha=.2) +
+  stat_function(fun=function(x) {1}, color="black", aes(1)) +
+  labs(x = TeX("x"), y = TeX('Frecuencia, f(x)')) +
+  ggtitle("Histograma vs. Densidad") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylim(0,2)
+```
+
+```{r}
+prueba.chisq.uniforme <- function(x, k = ceiling(length(x)/5)) {
+  n <- length(x)
+  part <- seq(0, 1, length = k + 1) #partición 
+  z <- hist(x, breaks = part, plot = F)$counts 
+  ch <- (k/n)*sum((z-n/k)^2) #estadística chi 
+  pval <- pchisq(ch, k - 1, lower.tail = F) 
+  return(list(part = part, freqs = z, estadistica = ch, pval = pval))
+}
+chiTest <- prueba.chisq.uniforme(unifs, ceiling(length(unifs)/5))
+chi <- chiTest[[3]]
+chi.pval <- chiTest[[4]]
+```
+
+
+Para la prueba de bondad de ajuste $\chi^2$ de Pearson, las hipótesis a contrastar son las mismas que las de la prueba de Kolmogorov-Smirnov En este caso la estadistica de prueba toma el siguinete valor:
+
+$$\chi^2=\sum_{i=1}^{k}\frac{(N_j-np_j)^2}{np_j}=\sum_{i=1}^{`r length(chiTest[2])`}\frac{(N_j-10000p_j)^2}{10000p_j}=`r chi`$$
+
+De manera que el valor p está dado por 
+
+$$\textrm{p-value} = `r chi.pval`$$
+
+Por lo tanto no se rechaza la hipótesis nula de que los datos generados por Excel provienen de la distribución uniforme en el intervalo $[0,1]$.
+
+A continuación se presenta un qq-plot de lo valores generados por Excel.
+Si el qq'plot sigue la recta identidad cuando se grafica contra la distribución teórica, entonces se puede decir que los datos siguien adecuadamente la distribución uniforme en el intervalo $[0,1]$.
+
+```{r, fig.width=4, fig.height=3, fig.align = "center"}
+ggplot(data=df, aes(sample=Unif)) +
+  stat_qq(distribution = qunif) +
+  stat_function(fun=function(x) x, size=1, color = "green", aes(seq(0,1,10000))) +
+  xlim(c(0,1)) +
+  ylim(c(0,1)) +
+  labs(x = TeX("Teóricos"), y = TeX("Muestrales")) +
+  ggtitle("QQ-Plot") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Al parecer se tiene un buen ajuste, sin embargo, esto no es una prueba en sentido estricto; es simplemente una guía visual para determinar si se tiene un buen ajuste.
