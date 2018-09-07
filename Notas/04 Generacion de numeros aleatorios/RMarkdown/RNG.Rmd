@@ -1,0 +1,182 @@
+---
+title: 'Laboratorio: Ejercicios variables aleatorias'
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r INSTALACION DE PAQUETES, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+
+#install.packages(c("plot3D", "animation", "randtoolbox","rgl"))
+
+```
+
+
+# Números aleatorios uniformes
+
+## Método del cuadrado medio
+Se desarrollará el ejemplo del cuadrado medio propuesto por Von Neumann y Stanislaw Ulam. La siguiente función cm ejecuta el proceso tomando un valor inicial.
+
+```{r}
+cm <- function(x){
+#a partir de la semilla x, se genera una sucesión de valores, 
+#tomando los valores de enmedio de la serie
+  u <- x/10^nchar(as.character(x)) #primer uniforme
+  z <- x #copia de trabajo
+  repeat{
+    #verifica que el número tenga suficientes dígitos
+    z <- z^2
+    n <- nchar(z)
+    if (n < 6) break 
+    #partiendo de un tamaño de 7 dígitos, escogemos los dígitos centrales y vamos recorriendo   
+    z <- as.numeric(as.character(substr(z,n-5,n-2)))
+    u <- append(u,z/10000)
+    if ((u[length(u)] == 0 ) | length(unique(u)) < length(u)) break #si el último número es 0 o ya se repiten termina
+  }
+  return(u)
+}
+```
+
+Podemos ver que los problemas de **cm** son que genera secuencias o muy cortas o convierte rápidamente a 0
+
+```{r}
+# converge rápido a 0:
+cm(1009)
+# ciclos cortos:
+cm(898775)
+```
+
+Considerando otro número para un ciclo más largo (por ejemplo $`r options(scipen=9); z0 <- 5675431 ; z0 `$), Â¿qué tan aleatorios se ven los números y cómo lo podemos verificar? ¿Qué pruebas podemos hacer para verificar aleatoriedad? Algunos ejemplos se muestran a continuación
+
+```{r}
+z0 <- 5675431
+u <- cm(z0)
+u
+```
+
+
+Podemos probar para varios números de qué tamaño son las longitudes. Tomado los números de 556,734 a 1,000,000 (de 1,000 en 1,000) obtenemos
+
+```{r}
+J <- seq(556734, 1000000, by = 100)
+i <- NULL
+for (j in J) i[match(j,J)] <- length(cm(j))
+head(i,20)
+max(i)
+```
+
+## GLC con parámetros inadecuados
+
+Este ejemplo genera una animación de un glc con parámetros inadecuados, y genera números aleatorios que no pasarían pruebas de uniformidad.
+
+```{r}
+library(plot3D)
+library(animation)
+
+lcg.poor <- function(n){
+# http://www.aaronschlegel.com/linear-congruential-generator-r/
+rng <- vector(length=n)
+m <- 2048
+a <- 1229
+c <- 1
+d <- as.numeric(Sys.time())*1000 #genera una semilla del reloj de la compu
+ 
+for (i in 1:n){
+    d <- (a*d+c) %% m
+    rng[i] <- d/m
+ }
+ return(rng)
+}
+
+n <- c(3,10,20,100,500,1000,2000,5000,10000,20000)
+
+saveGIF({
+  for (i in 1:length(n)){
+    x <- lcg.poor(n[i])
+    y <- lcg.poor(n[i])
+    z <- lcg.poor(n[i])
+  
+  scatter3D(x,y,z, colvar = NULL, pch=20, cex=0.5,
+                   theta = 20,
+                   main =paste("n= ",n[i]))
+  }
+}, movie.name="lcg_poor.gif")
+```
+
+
+## GLC's
+
+Veremos cómo afectan las constantes a los generadores lineales congruenciales. Prueben con distintos números y verifiquen el teorema de Hull y Dubell, así como el teorema para GLC's multiplicativos.
+
+```{r}
+lgc  <- function(m=16,a=5,c=3,z0=7,graf=T){
+  #esta función genera un lgc hasta que alcanza su periodo
+            z <- z0
+            i <- 1
+            repeat {
+                i <- i+1
+                z[i] <- (a*z[i-1] + c) %% m
+                if(i>m) break
+            }
+          if (graf){
+              par(pty="s")
+              plot(z[2:(m+1)]/m, z[1:m]/m, 
+                  xlab = "u[i]", ylab = "u[i-1]", main =
+                  paste0("Generador congruencial m=",m,", a=",a,", c=",c))
+          }
+          return(z/m)
+        }
+z <- lgc(m=32,a=5,c=3)
+```
+
+### Uso de semilla aleatoria
+
+Fijando una semilla podemos generar de nuevo las mismas secuencias de números aleatorios.
+```{r}
+set.seed(10)
+runif(5)
+runif(5)
+set.seed(10)
+runif(5)
+runif(5)
+```
+
+Podemos cambiar el generador de núeros aleatorios por default.
+```{r}
+RNGkind() #nos dice cuál es el activo
+RNGkind("Super-Duper")
+RNGkind()
+runif(10)
+RNGkind("Mersenne-Twister")
+runif(10)
+```
+
+El paquete *randtoolbox* facilita utilizar algunos generadores, por ejemplo:
+
+```{r}
+library(randtoolbox)
+congruRand(10, mod=2^31-1, mult = 16807, incr = 0)
+```
+
+```{r}
+library(rgl) #visualización en 3D
+#RANDU:
+x <- congruRand(1200,mod = 2^31, mult = 2^16 +3, incr = 0)
+plot3d(matrix(x,ncol=3,byrow=T))
+```
+
+Ejercicio: Programar un generador de Fibonacci: $Z_i \equiv (Z_{i-r}+Z_{i-s}) \mod m$
+
+# Números de otras distribuciones.
+
+## Teorema de la transformación integral de probabilidad
+
+Ejercicio 1: Generar una muestra de 1000 números aleatorios exponenciales con parámetro $\lambda$ usando números aleatorios uniformes. Hacer su histograma y comparar con la densidad teórica.
+
+Ejercicio 2: Generar una muestra de 1000 números aleatorios con distribución Cauchy. Hacer su histograma y comparar con la densidad teórica.
+
+Ejercicio 3: Generar una muestra aleatoria de 1000 números aleatorios con distribución geométrica con parámetro $p$
+
+Ejercicio 4: Generar una muestra de 1000 variables Poisson con parámetro $\lambda$ y verificar que proviene efectivamente de una Poisson.
