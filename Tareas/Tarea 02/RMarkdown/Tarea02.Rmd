@@ -531,6 +531,28 @@ Notamos que tiene periodo 4.
 Genera 10,000 números con una semilla de $Z_0 = 1$ usando el generador $Z_n = 75Z_{n−1}$ mod $2^{31}-1$. Clasifica los números en 10 celdas de igual tamaño y prueben por uniformidad usando la prueba Ji cuadrada con un nivel de confianza del 90 %. Aplicar también la prueba de rachas.
 
 
+# Problema 10
+Generar 1500 números del generador RANDU. Hacer una prueba de Kolmogorov-Smirnov al 95 % de confianza
+```{r}
+options(scipen=9)
+seed <- as.double(1)
+RANDU <- function() {
+seed <<- ((2^16 + 3) * seed) %% (2^31)
+seed/(2^31)
+}
+randu0 <- NULL
+for(i in 1:1500) randu0[i] <- RANDU()
+head(randu0,20)
+
+par(pty="s")
+plot(randu0[1:1499],randu0[2:1500],xlab=expression(u[i]),ylab=expression(u[i-1]),pch=16,cex=0.5)
+
+
+ks.test(randu0,"punif",0,1)
+
+```
+
+
 
 ```
 
