@@ -546,6 +546,27 @@ R.p.val8 <- rachas.test8$pval
 
 Aplicando la prueba de rachas de Wald-Wolfowitz, se tiene el siguiente valor del estadistico de prueba:
 
-$$R=`r R8`.$$
+# Problema 10
+Generar 1500 números del generador RANDU. Hacer una prueba de Kolmogorov-Smirnov al 95 % de confianza
+```{r}
+options(scipen=9)
+seed <- as.double(1)
+RANDU <- function() {
+seed <<- ((2^16 + 3) * seed) %% (2^31)
+seed/(2^31)
+}
+randu0 <- NULL
+for(i in 1:1500) randu0[i] <- RANDU()
+head(randu0,20)
+
+par(pty="s")
+plot(randu0[1:1499],randu0[2:1500],xlab=expression(u[i]),ylab=expression(u[i-1]),pch=16,cex=0.5)
+
+
+ks.test(randu0,"punif",0,1)
+
+```
+
+
 
 
