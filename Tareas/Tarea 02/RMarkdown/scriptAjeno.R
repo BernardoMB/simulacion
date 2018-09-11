@@ -1,0 +1,1 @@
+df = read.csv("../Movies.csv", sep=",", header = TRUE)
