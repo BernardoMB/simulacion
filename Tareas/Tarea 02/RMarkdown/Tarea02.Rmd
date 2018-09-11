@@ -311,7 +311,7 @@ Al parecer se tiene un buen ajuste, sin embargo, esto no es una prueba en sentid
 
 ## Pruebas de independencia
 
-Aplicando la prueba de independencia que utiliza a las rachas en la sucesión de números aleatorios se obtiene el siguiente número de rechas:
+Aplicando la prueba de independencia que utiliza a las rachas en la sucesión de números aleatorios se obtiene el siguiente número de rachas:
 
 ```{r}
 nrachas <- function(x) {
@@ -519,17 +519,33 @@ Genera $10,000$ números con una semilla de $Z_0=1$ usando el generador $Z_n=7^5
 \testbf{Solución:}
 
 ```{r}
-numeros <- c(1)
-for (i in 1:9999) {
-  z <- ((7^5)*numeros[i] %% ((2^31)-1))
-  numeros <- c(numeros, z)
+glc <- function(n, a, c, m, z0) {
+  Z<-c(z0)
+  for (i in 1:n-1) {
+    Z<-c(Z, (a*Z[i]+c) %% m)
+  }
+  U<-Z/m
+  return(U)
 }
-uniformes <- numeros/((2^31)-1)
-
-chiTest8 <- prueba.chisq.uniforme(numeros, ceiling(length(numeros)/10))
+uniformes <- glc(10000, 7^5, 0, (2^31)-1, 1)
+chiTest8 <- prueba.chisq.uniforme(uniformes, ceiling(length(uniformes)/10))
 chi8 <- chiTest8[[3]]
 chi.pval8 <- chiTest8[[4]]
 ```
+En la prueba $\chi^2$ el valor del estadiítico de prueba esta dado por
+$$\chi^2=`r chi8`<\chi^2_{9,0.1}=15.$$
+De manera que se obtiene un valor p dado por
+$$\textrm{p-value}=`r chi.pval8`.$$
+Por lo tanto no rechaza la hipótesis de que los números generados por el generador lineal congruencial siguen la distribución uniforme en el intervalo $[0,1]$.
 
+```{r}
+rachas.test8 <- prueba.rachas(uniformes)
+R8 <- rachas.test8$R
+R.p.val8 <- rachas.test8$pval
+```
+
+Aplicando la prueba de rachas de Wald-Wolfowitz, se tiene el siguiente valor del estadistico de prueba:
+
+$$R=`r R8`.$$
 
 
