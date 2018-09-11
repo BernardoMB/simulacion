@@ -1,22 +1,26 @@
 ---
-title: "Tarea 2 Simulación"
-author: "Bernardo Mondragón Brozon"
+title: "Tarea 2 SimulaciÃ³n"
+author: "Bernardo MondragÃ³n Brozon"
 date: "13 de septiembre de 2018"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
 
+<!-- Dudas: -->
+<!-- Como se demuestra la 6 -->
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-install.packages(c(
-  "ggplot2",
-  "latex2exp",
-  "gmp",
-  "numbers",
-  "goftest",
-  "randtoolbox"
-))
+# install.packages(c(
+#   "ggplot2",
+#   "latex2exp",
+#   "gmp",
+#   "numbers",
+#   "goftest",
+#   "randtoolbox"
+# ))
 ```
 
 # Problema 1
@@ -30,23 +34,23 @@ $$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m$$
 Para $i=0$ se tiene que
 
 $$\begin{aligned}
-  Z_0 &\equiv Z_0 \quad \mathrm{mod} \quad m  \\
-            &\equiv  a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
+  Z_0 & = Z_0 \quad \mathrm{mod} \quad m  \\
+            & = a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
 \end{aligned}$$
 
 y para $i=1$ se tiene que
 
 $$\begin{aligned}
-  Z_1 &\equiv  aZ_0 + c  \quad \mathrm{mod} \quad m  \\
-      &\equiv  a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
+  Z_1 & = aZ_0 + c  \quad \mathrm{mod} \quad m  \\
+      & = a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
 \end{aligned}$$
 
 Procediendo por indución matemática, se supone válido para $i$ de manera que 
 
 $$\begin{aligned}
-  Z_{i+1} &\equiv  aZ_i + c  \quad \mathrm{mod} \quad m  \\
-      &\equiv  a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
-      &\equiv  a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
+  Z_{i+1} & = aZ_i + c  \quad \mathrm{mod} \quad m  \\
+      & = a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
+      & = a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
 \end{aligned}$$
 
 Por lo tanto es váido para toda $i\in\mathbb{N}$.
@@ -57,7 +61,7 @@ $\blacksquare$
 
 # Problema 2
 
-¿Qué se puede decir del periodo de $Z_{i} &\equiv 630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
+¿Qué se puede decir del periodo de $Z_{i} = 630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
 
 \textbf{Solución:}
 
@@ -76,6 +80,7 @@ Sin calcular ninguna $Z_i$, determinar cuál de los siguientes GLC’s mixtos ti
 \end{itemize}
 
 \textbf{Solución:}
+
 Considerando lo mencionado en la pregunta anterior, se puede determinar que (c) no tiene periodo completo. La segunda condición de Hull & Dobell indica que si $q$ es un número primo que divide a $m$ entonces $q$ debe dividir a $a-1$. Notemos que (b) no cumple (considerar $q=2$), por lo que tampoco tiene periodo completo. Mencionando el último punto, si 4 divide a $m$, entonces 4 divide a $a-1$. Vemos que esta condición no aplica (d) por lo tanto tiene periodo completo. Es fácil verificar que (a) y (d) cumplen las 3 condiciones.
 
 ```{r, warning=FALSE, message=FALSE}
@@ -269,7 +274,7 @@ prueba.chisq.uniforme <- function(x, k = ceiling(length(x)/5)) {
   part <- seq(0, 1, length = k + 1) #partición 
   z <- hist(x, breaks = part, plot = F)$counts 
   ch <- (k/n)*sum((z-n/k)^2) #estadística chi 
-  pval <- pchisq(ch, k - 1, lower.tail = F) 
+  pval <- pchisq(ch, k - 1, lower.tail = F) # k-1 grados de libertad
   return(list(part = part, freqs = z, estadistica = ch, pval = pval))
 }
 chiTest <- prueba.chisq.uniforme(unifs, ceiling(length(unifs)/5))
@@ -475,6 +480,7 @@ f_{S_2}(s) = \left\{
         \end{array}.
     \right.
 $$
+
 de manera que 
 
 $$\begin{aligned}
@@ -483,12 +489,47 @@ $$\begin{aligned}
 \end{aligned}$$
 
 Entonces $\{S_2\}$ sigue la distribución uniforme en el intervalo $[0,1]$. Procediendo mediante inducción se supone válido para $k$, de manera que 
+
 $$\{S_k\}\sim U[0,1].$$
 
 Por lo tanto, para $k+1$ se tiene que 
+
 $$\{S_{k+1}\}=\{U_1+\cdots+U_{k+1}\}=\{\{U_1+\cdots+U_k\}+U_{k+1}\}=\{\{S_k\}+U_{k+1}\}.$$
 Pero $\{S_k\}$ y $U_{k+1}$ tienen la distribución uniforme y son independientes, entonces 
 $$\{S_{k+1}\}\sim U[0,1].$$
+
 \begin{flushright}
 $\blacksquare$
 \end{flushright}
+
+# Problema 7
+
+Un generador Fibonacci obitiene $X_{n+1}$ a partir de $X_n$ y $X_{n-1}$ de la siguiente forma:
+
+$$X_{i+1}=X_i+X_{i-1} \quad \textrm{mod} \quad m$$
+
+donde $X_0$ y $X_1$ están especificados. Suponga que $m=5$. Sólo dos ciclos son posibles. Encontrarlos, así como su respectivo periodo.
+
+\textbf{Solución:}
+
+# Problema 8
+
+Genera $10,000$ números con una semilla de $Z_0=1$ usando el generador $Z_n=7^5Z_{n-1} \quad \textrm{mod} \quad 2^{31}-1$ Clasifica los números en $10$ celdas de igual tamaño y prueba uniformidad usando la prueba $\chi^2$ con un nivel de confianza del $90\%$. Aplicar también la prueba de rachas.
+
+\testbf{Solución:}
+
+```{r}
+numeros <- c(1)
+for (i in 1:9999) {
+  z <- ((7^5)*numeros[i] %% ((2^31)-1))
+  numeros <- c(numeros, z)
+}
+uniformes <- numeros/((2^31)-1)
+
+chiTest8 <- prueba.chisq.uniforme(numeros, ceiling(length(numeros)/10))
+chi8 <- chiTest8[[3]]
+chi.pval8 <- chiTest8[[4]]
+```
+
+
+
