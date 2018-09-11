@@ -1,0 +1,235 @@
+---
+title: "Ejemplos Generación de Variables Aleatorias"
+author: "Jorge de la Vega"
+date: "11 de septiembre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Ejemplos Generación de variables aleatorias
+
+## 1. Obtener muestras de una distribución normal truncada
+
+Supongan que queremos generar una muestra de $X\sim N(\mu,\sigma^2)$, truncada al intervalo $(a,b)$. 
+
+1. Una manera de hacerlo es generar observaciones de la distribución no truncada y quedarse con los valores que caen en el intervalo.
+
+2. Otra manera es aplicar la transformación inversa con la traslación respectiva: muestra $\nu \sim U(F(a),F(b))$ y obtén $X=F^{-1}(\nu)$.
+
+El primer método puede ser muy costoso si $c = F(b)-F(a)$ es muy pequeño, pues el número promedio de extracciones por cada aceptación es $1/c$.
+
+Para verlo numéricamente, consideremos el siguiente ejemplo concreto: $\mu=2, \sigma=3, a=2, b=4$. Podemos definir las siguientes funciones en R para comparar ambos métodos:
+
+```{r}
+metodo1 <- function(mu,sigma,a,b,n){
+ #esta función muestrea de la distribución normal y posteriormente selecciona los casos 
+ #que caen en el intervalo (a,b) para obtener una muestra truncada de la normal.
+l <- 0 #longitud inicial de la muestra
+iter <- 0 #número de iteraciones
+y <- NULL #vector con los valores aceptados
+while(l < n){
+  x <- rnorm(1,mean=mu,sd=sigma)
+  if(x>=a & x<=b) y <- c(y,x)
+  l <- length(y)
+  iter <- iter + 1
+  next
+}
+return(list(y=y,iter=iter))
+}
+```
+
+En esta función es necesario usar la instrucción de control *while* para poder obtener el tamaño de muestra deseado, ya que el número de rechazos es una variable aleatoria.
+
+Evaluando el método 1 podemos ver que la muestra se comporta como se espera:
+
+```{r}
+mu <- 2; sigma <- 3; a<- 2; b <- 4; n <- 10000
+y <- metodo1(mu=mu,sigma=sigma,a=a,b=b,n=n)$y
+x <- seq(a,b,length.out = n)
+hist(y,prob=T)
+lines(x,dnorm(x,mean=mu,sd=sigma)/(pnorm(b,mean=mu,sd=sigma)-pnorm(a,mean=mu,sd=sigma)))
+```
+
+Ahora consideremos el segundo método.
+
+```{r}
+metodo2 <- function(mu,sigma,a,b,n){
+  #Esta función obtiene una muestra de la distribución normal a partir de transformación integral
+u <- runif(n)
+v <- pnorm(a,mean=mu,sd=sigma)+(pnorm(b,mean=mu,sd=sigma)-pnorm(a,mean=mu,sd=sigma))*u
+return(qnorm(v,mean=mu,sd=sigma))
+}
+```
+
+Veamos cómo se ajusta la gráfica de la muestra
+
+```{r}
+mu <- 2; sigma <- 3; a<- 2; b <- 4; n <- 10000
+y <- metodo2(mu=mu,sigma=sigma,a=a,b=b,n=n)
+x <- seq(a,b,length.out = n)
+hist(y,prob=T)
+lines(x,dnorm(x,mean=mu,sd=sigma)/(pnorm(b,mean=mu,sd=sigma)-pnorm(a,mean=mu,sd=sigma)))
+```
+
+
+
+Comparemos la ejecución de ambos métodos para determinar su eficiencia:
+
+```{r}
+system.time(y1 <- metodo1(mu=2,sigma=3,a=2,b=4,n=100000))
+system.time(y2 <- metodo2(mu=2,sigma=3,a=2,b=4,n=100000))
+```
+
+
+
+##2. Estadísticas de órden. 
+
+El siguiente ejercicio compara los dos métodos vistos en clase para generar las estadísticas de orden de una distribución exponencial. Para fijar ideas consideremos $\lambda=3$, para $n=5$ estadísticas de orden, y consideremos una muestra de la tercera estadística de orden, $X_{(3)}$.
+
+Los métodos a comparar son:
+
+1. Generar una muestra de la distribución objetivo y ordenar los valores para obtener la estadística de orden, y
+2. Usar muestras de la distribución Beta, como vimos en el algoritmo descrito en clase.
+
+```{r}
+m1 <- function(N,n,k,lambda){
+  #Función para generar una muestra de tamaño N de la késima estadística de orden de una 
+  #muestra de tamaño n de una distribución exp(lambda)
+  M <- matrix(-lambda*log(runif(N*n)),nrow=N,ncol=n,byrow=T)
+  return(apply(M,1,function(x)sort(x)[k]))
+}
+
+x <- m1(1000,5,3,3)
+hist(x,prob=T)
+```
+
+Para el segundo método, obtenemos la $beta(i,n-i+1)$ a través del método de aceptación-rechazo. Es fácil probar que podemos usar como cobertura la uniforme con la constante que alcanza el óptimo en $x= \frac{i-1}{n-1}$.
+
+```{r}
+rbeta1 <- function(N,n,i){
+  #esta función obtiene una muestra aleatoria de tamaño N de una beta(i,n-i+1)
+  M <- choose(n,i)*i*((i-1)/(n-1))^(i-1)*((n-i)/(n-1))^(n-i)
+  y <- NULL
+  l <- 0
+  while(l<N){
+    u1 <- runif(1)
+    if(runif(1) < M*u1^i*(1-u1)^(n-i))y <- c(y,u1)
+    l <- length(y)
+    next
+  }
+  return(y)
+  }
+```
+
+El segundo método nos da:
+
+```{r}
+m2 <- function(N,n,k,lambda){
+  #Función para generar una muestra de tamaño N de la késima estadística de orden de una 
+  #muestra de tamaño n de una distribución exp(lambda)
+  v <- rbeta1(N,n,k)
+  return(-lambda*log(v))
+}
+
+x <- m2(1000,5,3,3)
+hist(x,prob=T)
+
+```
+
+Un tercer método (por completes) similar al método 2, pero usando el generador de R
+
+```{r}
+m3 <- function(N,n,k,lambda){
+  #Función para generar una muestra de tamaño N de la késima estadística de orden de una 
+  #muestra de tamaño n de una distribución exp(lambda)
+  v <- rbeta(N,n,k)
+  return(-lambda*log(v))
+}
+
+x <- m3(1000,5,3,3)
+hist(x,prob=T)
+
+```
+
+Comparamos los métodos:
+
+```{r}
+system.time(m1(10000,5,3,3))
+system.time(m2(10000,5,3,3))
+system.time(m3(10000,5,3,3))
+```
+
+##3. Generación de Normales
+
+###3.1 Método TLC
+
+El primer método genera 12 uniformes en (-1/2,1/2). El problema es que la aproximación normal no es muy buena con sólo 12 observaciones.
+
+```{r}
+normaltlc <- function(n){
+  #Esta función genera n muestras "normales" utiizando la aproximación del TLC
+  return(apply(matrix(runif(n*12,min = -0.5,max = 0.5),nrow=n,byrow = F),1,sum))
+}
+
+hist(normaltlc(10000),probability = T)
+curve(dnorm,add=T,lwd=3)
+
+#comparando probabilidades en las colas: podemos ver que la aproximación no es muy buena.
+x <- normaltlc(10000)
+sum(x>3)/10000
+pnorm(3,lower.tail = F)
+```
+
+###Método Box-Müller
+
+Este método se basa en la transformación a coordenadas polares. Genera pares de variables aleatorias normales independientes
+
+```{r}
+normalBM <- function(n){ 
+    u1 <- runif(n)
+    u2 <- runif(n)
+		R  <- sqrt(-2*log(u1))  
+		z1 <- R*cos(2*pi*u2)
+		z2 <- R*sin(2*pi*u2)
+		return(cbind(z1,z2))
+}
+
+z <- normalBM(10000)
+par(mfrow=c(1,3))
+par(pty="s")
+hist(z[,1],breaks=20); hist(z[,2],breaks=20);plot(z,pch=16,cex=0.5)
+```
+
+La calidad de los normales dependerán de los números uniformes que se utilicen. En el siguiente ejemplo, usaremos un generador para uniformes congruencial malo (RANDU).
+
+
+```{r}
+	seed <- 10
+	RANDU <- function() {seed <<-(3 * seed+1) %% (64); seed/(64)} #generador RANDU
+	u <- NULL; n <- 1000
+	for(i in 1:n) u <- c(u,RANDU()) #genera muestra de n uniformes RANDU
+	
+	R <- sqrt(-2*log(u[1:(n-1)]))  #Ahora obten normales con Box-Muller
+	z1 <- R*cos(2*pi*u[2:n])
+	z2 <- R*sin(2*pi*u[2:n])
+	par(mfrow=c(1,2))
+	par(pty="s")
+	plot(u[1:(n-1)],u[2:n],pch=16)
+	plot(z1,z2,pch=16)	
+```
+
+Algunos problemas podrían mejorarse permutando los números uniformes antes de usarlos.
+
+```{r}
+	#Ahora permutamos para mejorar la cobertura.
+	v <- sample(u); R <- sqrt(-2*log(v[1:(n-1)])); th <- v[2:n]
+  par(mfrow=c(1,2))
+  par(pty="s")
+	plot(v[1:(n-1)],v[2:n],pch=16,cex=0.4)
+	plot( R*cos(2*pi*th), R*sin(2*pi*th), pch=16, cex=0.2)	
+
+```
+

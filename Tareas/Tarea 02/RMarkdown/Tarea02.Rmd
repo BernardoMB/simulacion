@@ -1,8 +1,10 @@
 ---
 title: "Tarea 2 Simulación"
-author: "Bernardo Mondraón Brozon"
-date: "4 de septiembre de 2018"
-output: pdf_document
+author: "Bernardo Mondragón Brozon"
+date: "13 de septiembre de 2018"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -28,23 +30,23 @@ $$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m$$
 Para $i=0$ se tiene que
 
 $$\begin{aligned}
-  Z_0 &= Z_0 \quad \mathrm{mod} \quad m  \\
-            &= a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
+  Z_0 &\equiv Z_0 \quad \mathrm{mod} \quad m  \\
+            &\equiv  a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
 \end{aligned}$$
 
 y para $i=1$ se tiene que
 
 $$\begin{aligned}
-  Z_1 &= aZ_0 + c  \quad \mathrm{mod} \quad m  \\
-      &= a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
+  Z_1 &\equiv  aZ_0 + c  \quad \mathrm{mod} \quad m  \\
+      &\equiv  a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
 \end{aligned}$$
 
 Procediendo por indución matemática, se supone válido para $i$ de manera que 
 
 $$\begin{aligned}
-  Z_{i+1} &= aZ_i + c  \quad \mathrm{mod} \quad m  \\
-      &= a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
-      &= a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
+  Z_{i+1} &\equiv  aZ_i + c  \quad \mathrm{mod} \quad m  \\
+      &\equiv  a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
+      &\equiv  a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
 \end{aligned}$$
 
 Por lo tanto es váido para toda $i\in\mathbb{N}$.
@@ -55,11 +57,11 @@ $\blacksquare$
 
 # Problema 2
 
-¿Qué se puede decir del periodo de $Z_i=630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
+¿Qué se puede decir del periodo de $Z_{i} &\equiv 630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
 
 \textbf{Solución:}
 
-Se puede decir que su periodo es inferor a $2^{31}-1$.
+Se puede decir que su periodo es menor o igual $2^{31}-1$.Además no tiene periodo completo, recordemos que de acuerdo a la primera condición del teorema de periodo completo de Hull & Dobell, c y m deben ser primos relativos, en este caso $m=2^{31}-1$ y $c=0$, por lo que no cumple.
 
 # Problema 3
 
@@ -74,6 +76,7 @@ Sin calcular ninguna $Z_i$, determinar cuál de los siguientes GLC’s mixtos ti
 \end{itemize}
 
 \textbf{Solución:}
+Considerando lo mencionado en la pregunta anterior, se puede determinar que (c) no tiene periodo completo. La segunda condición de Hull & Dobell indica que si $q$ es un número primo que divide a $m$ entonces $q$ debe dividir a $a-1$. Notemos que (b) no cumple (considerar $q=2$), por lo que tampoco tiene periodo completo. Mencionando el último punto, si 4 divide a $m$, entonces 4 divide a $a-1$. Vemos que esta condición no aplica (d) por lo tanto tiene periodo completo. Es fácil verificar que (a) y (d) cumplen las 3 condiciones.
 
 ```{r, warning=FALSE, message=FALSE}
 library(numbers)
