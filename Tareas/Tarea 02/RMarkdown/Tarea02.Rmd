@@ -23,30 +23,30 @@ install.packages(c(
 
 Probar por inducción matemática que para un generador lineal congruencial,
 
-$$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m$$
+$$Z_i = a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m$$
 
 \textbf{Demostración:}
 
 Para $i=0$ se tiene que
 
 $$\begin{aligned}
-  Z_0 &\equiv Z_0 \quad \mathrm{mod} \quad m  \\
-            &\equiv  a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
+  Z_0 = Z_0 \quad \mathrm{mod} \quad m  \\
+            =  a^0Z_0+c\frac{a^0-1}{a-1} \quad \mathrm{mod} \quad m,
 \end{aligned}$$
 
 y para $i=1$ se tiene que
 
 $$\begin{aligned}
-  Z_1 &\equiv  aZ_0 + c  \quad \mathrm{mod} \quad m  \\
-      &\equiv  a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
+  Z_1 =  aZ_0 + c  \quad \mathrm{mod} \quad m  \\
+      =  a^1Z_0+c\frac{a^1-1}{a-1} \quad \mathrm{mod} \quad m.
 \end{aligned}$$
 
 Procediendo por indución matemática, se supone válido para $i$ de manera que 
 
 $$\begin{aligned}
-  Z_{i+1} &\equiv  aZ_i + c  \quad \mathrm{mod} \quad m  \\
-      &\equiv  a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
-      &\equiv  a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
+  Z_{i+1} =  aZ_i + c  \quad \mathrm{mod} \quad m  \\
+      =  a\left(a^iZ_0+c\frac{a^i-1}{a-1}\right)+c \quad \mathrm{mod} \quad m \\
+      = a^{i+1}Z_0+c\frac{a^{i+1}-1}{a-1} \quad \mathrm{mod} \quad m. \\
 \end{aligned}$$
 
 Por lo tanto es váido para toda $i\in\mathbb{N}$.
@@ -57,7 +57,7 @@ $\blacksquare$
 
 # Problema 2
 
-¿Qué se puede decir del periodo de $Z_{i} &\equiv 630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
+¿Qué se puede decir del periodo de $Z_{i} = 630,360,016Z_{i-1} \quad \mathrm{mod} \quad 2^{31}-1$?
 
 \textbf{Solución:}
 
@@ -141,9 +141,9 @@ Mostrar que el promedio de las $U_i$’s tomadas de un ciclo completo de un GLC 
 
 El ciclo de un generador lineal congruencial de periodo completo dado por
 
-$$Z_i=aZ_{i-1}+c \quad \textrm{mod} \quad m$$
+$$Z_i = aZ_{i-1}+c \quad \textrm{mod} \quad m$$
 
-tiene un total de $m$ números. Además de probó que 
+tiene un total de $m$ números. Además se probó que 
 
 $$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m,$$
 
