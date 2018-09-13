@@ -1,6 +1,6 @@
 ---
-title: "Tarea 2 SimulaciÃ³n"
-author: "Bernardo MondragÃ³n Brozon"
+title: "Tarea 2 Simulación"
+author: "Bernardo Mondragón Brozon, Diego García Santoyo, Rayan García Fabian, Karen Delgado Curiel"
 date: "13 de septiembre de 2018"
 output:
   pdf_document: default
@@ -19,7 +19,9 @@ knitr::opts_chunk$set(echo = FALSE)
 #   "gmp",
 #   "numbers",
 #   "goftest",
-#   "randtoolbox"
+#   "randtoolbox",
+#   "randtests",
+#   "knitr"
 # ))
 ```
 
@@ -65,7 +67,7 @@ $\blacksquare$
 
 \textbf{Solución:}
 
-Se puede decir que su periodo es menor o igual $2^{31}-1$.Además no tiene periodo completo, recordemos que de acuerdo a la primera condición del teorema de periodo completo de Hull & Dobell, c y m deben ser primos relativos, en este caso $m=2^{31}-1$ y $c=0$, por lo que no cumple.
+Se puede decir que su periodo es menor o igual $2^{31}-1$. Además no tiene periodo completo, recordemos que de acuerdo a la primera condición del teorema de periodo completo de Hull & Dobell, c y m deben ser primos relativos, en este caso $m=2^{31}-1$ y $c=0$, de manera que no se cumple la condición.
 
 # Problema 3
 
@@ -76,7 +78,7 @@ Sin calcular ninguna $Z_i$, determinar cuál de los siguientes GLC’s mixtos ti
 \item[b)] $Z_i=12Z_{i-1} + 13 \quad \mathrm{mod} \quad 16$.
 \item[c)] $Z_i=13Z_{i-1} + 12 \quad \mathrm{mod} \quad 16$.
 \item[d)] $Z_i=Z_{i-1} + 12 \quad \mathrm{mod} \quad 13$.
-\item[e)] El GLC con pará metros: $a=2,814,749,767,109$, $c=59,482,661,568,307$, $m=248$.
+\item[e)] El GLC con parámetros: $a=2,814,749,767,109$, $c=59,482,661,568,307$, $m=248$.
 \end{itemize}
 
 \textbf{Solución:}
@@ -154,7 +156,11 @@ $$Z_i=a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m,$$
 
 de manera que el promedio de los $m$ números generados está dado por
 
-$$\frac{1}{m}\sum_{i=1}^{m}\left( a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m\right)$$
+$$\frac{1}{m}\sum_{i=1}^{m}\left( a^iZ_0+c\frac{a^i-1}{a-1}\quad \mathrm{mod} \quad m\right)=\frac{1}{m}\sum_{i=1}^{m-1}i=\frac{1}{m}\left(\frac{m(m-1)}{2}\right)=\frac{1}{2}-\frac{1}{2m}$$
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
 
 # Problema 5
 
@@ -516,7 +522,7 @@ donde $X_0$ y $X_1$ están especificados. Suponga que $m=5$. Sólo dos ciclos so
 
 Genera $10,000$ números con una semilla de $Z_0=1$ usando el generador $Z_n=7^5Z_{n-1} \quad \textrm{mod} \quad 2^{31}-1$ Clasifica los números en $10$ celdas de igual tamaño y prueba uniformidad usando la prueba $\chi^2$ con un nivel de confianza del $90\%$. Aplicar también la prueba de rachas.
 
-\testbf{Solución:}
+\textbf{Solución:}
 
 ```{r}
 glc <- function(n, a, c, m, z0) {
@@ -532,19 +538,117 @@ chiTest8 <- prueba.chisq.uniforme(uniformes, ceiling(length(uniformes)/10))
 chi8 <- chiTest8[[3]]
 chi.pval8 <- chiTest8[[4]]
 ```
+
 En la prueba $\chi^2$ el valor del estadiítico de prueba esta dado por
+
 $$\chi^2=`r chi8`<\chi^2_{9,0.1}=15.$$
+
 De manera que se obtiene un valor p dado por
+
 $$\textrm{p-value}=`r chi.pval8`.$$
+
 Por lo tanto no rechaza la hipótesis de que los números generados por el generador lineal congruencial siguen la distribución uniforme en el intervalo $[0,1]$.
 
-```{r}
-rachas.test8 <- prueba.rachas(uniformes)
-R8 <- rachas.test8$R
-R.p.val8 <- rachas.test8$pval
+```{r, message=FALSE, warning=FALSE}
+library(randtests)
+rachas8 <- runs.test(uniformes)
+R8 <- rachas8$statistic
+pvalR8 <- rachas8$p.value
 ```
 
 Aplicando la prueba de rachas de Wald-Wolfowitz, se tiene el siguiente valor del estadistico de prueba:
+
+$$R=`r R8`.$$
+De manera que se obtiene un valor p dado por
+
+$$\textrm{p-value}=`r pvalR8`.$$
+El valor p es muy pequeño, entonces se rechaza la hipótesis de que los números generados por el generador lineal congruencial provienen de la distribución uniforme en el intervalo $[0,1]$.
+
+# Problema 9
+
+Aplicar a los datos del ejercicio las pruebas de correlación, gaps y poker.
+
+\textbf{Solución:}
+
+```{r, include=FALSE}
+cor.j <- function(x, j) {
+  n<-length(x)
+  xbar<-mean(x)
+  if (j>=n) stop("j debe ser menor que length(x)")
+  rhoj<-sum((x[1:(n-j)]-xbar)*(x[(1+j):n]-xbar))/(n-j)/var(x)
+  rhoj
+}
+
+cor.unif.j <- function(x, j) {
+  n<-length(x)
+  h<-floor((n-1)/j)-1
+  v<-NULL
+  rhoj<-12*sum(x[1+(0:h)*j]*x[1+((0:h)+1)*j])/(h+1)-3
+  rhoj
+}
+
+prueba.correl<- function(x,sig=0.01) {
+  A<-NULL
+  n<-length(x)
+  for (i in 1:floor(n/4)){
+    h<-floor((n-1)/i)-1
+    A<-c(A,cor.unif.j(x,i)*(h+1)/sqrt(13*h+7))
+  }
+  pvals<-pnorm(abs(A),lower.tail=F)
+  
+  # plot(pvals,xlab="j",ylab="p-vals",ylim=c(0,.5),main="Prueba de independencia",cex=0.5)
+  # dep<-match(pvals[pvals<sig/2],pvals)
+  # text(dep*1.02,pvals[dep]*1.1,labels=dep,cex=0.7)
+  # abline(h=sig/2,col="red",lwd=3)
+  # return(list(A=A,pvals=pvals,j=dep))
+  
+  return(list(A=A,pvals=pvals))
+}
+```
+
+
+Aplicando la prueba de autocorrelación para varios rezagos se obtienen los siguientes valores de los estadísticos de prueba:
+
+```{r, fig.width=4, fig.height=3, fig.align = "center"}
+sig <- 0.01
+prueba.Correla <- prueba.correl(uniformes, sig)
+ggplot(data=data.frame(pvals=prueba.Correla$pvals, x=seq(1,2500,by=1))) +
+  geom_point(aes(x=x, y=pvals), color="green", size=.5) +
+  geom_hline(yintercept = sig/2) +
+  ggtitle("Prueba de independencia") +
+  ylab("p-vals") +
+  xlab("j") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+Gap.prueba <- gap.test(uniformes, echo = F)
+gap.est <- Gap.prueba$statistic
+gap.pval <- Gap.prueba$p.value
+```
+
+
+Aplicando la prueba de Gaps se obtiene el siguiente valor para la estadistica de prueba: 
+
+$$G=`r gap.est`.$$
+
+El valor p correspondiente esta dado por
+
+$$\textrm{p-value}=`r gap.pval`.$$
+
+```{r}
+prueba.poker9 <- prueba.poker(uniformes)
+prueba.poker9.est <- prueba.poker9$Estadistica
+prueba.poker9.pval <- prueba.poker9$pval
+```
+
+Aplicando la prueba del Poker se obtiene el siguiente valor para la estadistica de prueba: 
+
+$$P=`r prueba.poker9.est`.$$
+
+El valor p correspondiente esta dado por
+
+$$\textrm{p-value}=`r prueba.poker9.pval`.$$
 
 # Problema 10
 Generar 1500 números del generador RANDU. Hacer una prueba de Kolmogorov-Smirnov al 95 % de confianza
@@ -566,6 +670,89 @@ plot(randu0[1:1499],randu0[2:1500],xlab=expression(u[i]),ylab=expression(u[i-1])
 ks.test(randu0,"punif",0,1)
 
 ```
+
+# Problema 10
+Generar 1500 números del generador RANDU. Hacer una prueba de Kolmogorov-Smirnov al 95 % de confianza
+```{r}
+library(knitr)
+
+seed <- 1
+RANDU <- function() {
+  seed <<- ((2^16 + 3) * seed) %% (2^31)
+  return(seed/(2^31))
+}
+
+rands <- c()
+for(i in 1:1500) {
+  rands[i] <- RANDU()
+}
+
+kable(head(rands,20))
+
+par(pty="s")
+plot(rands[1:1499],rands[2:1500],xlab=expression(u[i]),ylab=expression(u[i-1]),pch=16,cex=0.5)
+
+
+ks.test(rands,"punif",0,1)
+
+```
+
+
+# Problema 11
+
+La página The number e to one million digits (https://apod.nasa.gov/htmltest/gifcity/e.1mil) contiene el primer millón de dígitos de e (pueden usar cualquier otra página). Considerando estos dígitos. Realizar un histograma y verificar la hipótesis de que los dígitos corresponden a una distribución uniforme discreta.
+Verificar independencia de los dígitos, considerando las pruebas de gaps, de poker y de rachas.
+
+```{r}
+mye = readLines("../digitosE.txt", warn=FALSE)
+piby1 = as.numeric(unlist(strsplit(mye,"")))
+plot1<-hist(piby1,main = "Frecuencia digitos e",xlab = "Digito",ylab = "Frecuencia")
+
+
+piby2=piby1/10
+
+#Prueba de gaps
+pruebaGap1<-gap.test(piby2)
+
+#Prueba de poker
+pruebaPoker<-poker.test(piby2)
+
+#Prueba de rachas
+#install.packages("randtests")
+#library(randtests)
+runs.test(piby2,threshold=mean(piby2))
+
+
+
+
+par(pty="s")
+plot(piby1[1:9999],piby1[2:10000],xlab=expression(e[i]),ylab=expression(e[i-1]),pch=16,cex=0.5)
+
+```
+
+Nota: Lo anterior se realizó considerando valores entre 0 y 0.9, con diferencias de 0.1
+
+# Problema 12
+
+Escriban un programa que utilice el método de la tranformación inversa para generar números de la densidad siguiente: $f(x)= \frac{1}{x^2} I(1 \leq x)$. Para probar el programa, hagan un histograma de $10,000$ números junto con la densidad f. Verificar la hipótesis de que la muestra siguie la distribución teórica dada y hacer un qq-plot e interpretar.
+
+```{r}
+  SDist1<-function(n){
+    Fu<-c()
+    u<-runif(n,0,1)
+    for (i in 1:n) {
+      Fu[i]<-1/(1-u[i]) 
+    }
+    return(Fu)
+  }
+
+hist(SDist1(10000),breaks = 100,prob=T,xlab = "",main = "f(x)",ylab = "")
+
+
+```
+
+
+
 
 
 
