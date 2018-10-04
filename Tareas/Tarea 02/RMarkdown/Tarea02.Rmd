@@ -12,12 +12,22 @@ output:
 <!-- Como se demuestra la 6 -->
 
 ```{r setup, include=FALSE}
+# WARNING: reopen this file with UTF8 econding
+
+# Chunk Options
 knitr::opts_chunk$set(echo = FALSE)
+
+# Install packages and then run all chunks
 # install.packages(c(
+#   # Beautifull data visualization
 #   "ggplot2",
-#   "latex2exp",
-#   "gmp",
+#   # Factorize numbers in prime factors
 #   "numbers",
+#   # Check for coprime numbers
+#   "gmp",
+#   # LaTeX expressions in graphs titles
+#   "latex2exp",
+#   # Goodness of fit tests
 #   "goftest",
 #   "randtoolbox",
 #   "randtests",
@@ -271,7 +281,7 @@ ggplot() +
   labs(x = TeX("x"), y = TeX('Frecuencia, f(x)')) +
   ggtitle("Histograma vs. Densidad") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  ylim(0,2)
+  ylim(0,1.5)
 ```
 
 ```{r}

@@ -1,0 +1,525 @@
+---
+title: "Tarea III"
+author: "Rayan García Fabián 144424"
+date: "1 October 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r paquetes,echo=FALSE}
+#intall.packages(c("gumbel"),"plotrix"))
+#library(gumbel)
+#library(plotrix)
+```
+ 
+## Pregunta 1
+Un estadístico está interesado en el número N de peces en un estanque. El captura 250 peces, los marca y los regresa al estanque. Unos cuantos días después regresa y atrapa peces hasta que obtiene 50 peces marcados, en ese punto también tiene 124 peces no marcados (la muestra total es de 174 peces).
+*¿Cuál es la estimación de N?
+*Haga un programa, que permita simular el proceso de obtener la primera y segunda muestra considerando como parámetros el tamaño $N$ de la población de interés, el tamaño de la primera y segunda muestra y como datos a estimar son: de qué tamaño debe ser $n_1$ y $n_2$ para obtener una buena aproximación y ver cómo se afecta por el tamaño $N$.
+
+###Solución
+
+Primero definamos la notación a usar. Consideremos $N$ como el número de peces en la población, $n_1$ el número de peces marcados en la primer muestra, $n_2$ el número de peces capturados en la segunda muestra y $r$ el número de animales de la segunda muestra que están marcados.
+Sabemos que  $N=174, n_1=250, n_2=174, r=50$.Entonces por el método de Lincoln–Petersen, suponiendo que no cambió la población de peces entre el momento de la primera y segunda muestra, se estima que $\hat{N}=\frac{n_1n_2}{r}$, sustituyendo valores $\hat{N}=870$.
+
+
+```{r p1}
+Simulacion_Peces<-function(N,n1,n2){ #Función para simular el proceso de obtener la primera y segunda muestra
+  pecesM<-c(rep("M",n1))
+  pecesT<-c(pecesM,c(rep("NM",N-n1)))
+  muestra2<-sample(pecesT,n2)
+  r<-length(subset(muestra2,muestra2=="M"))
+  N_est<-(n1*n2)/(r+1) #Ojo aquí consideramos r+1 ya que como no asignamos probabilidades a la muestra, se van a dar casos en los que r=0.
+  return(N_est)
+}
+
+#Supongamos N=10000, vamos a ver de qué tamaño deben ser n1 y n2 para obtener una buena estimación de N. Además supondremos que n1>n2
+N<-10000
+n1<-c(seq(20,1000,by=5))
+n2<-c(seq(10,990,by=5))
+
+M_est<-c()
+for (i in 1:length(n1)){
+  M_est[i]<-Simulacion_Peces(N,n1[[i]],n2[[i]])
+}
+
+plot(n1[1:length(n1)],M_est[1:length(n1)],type = "l",col="blue",main = "Estimación de N", xlab = "n1",ylab = "N est")
+```
+
+
+##Problema 2
+Este problema es una versión simplificada de dos problemas comunes que enfrentan las compañías de seguros: calcular la probabilidad de quebrar y estimar cuánto dinero podrán hacer.Supongan que una compañía de seguros tiene activos (todo en dólares) por $\$10^{6}$. Tienen $n= 1000$ clientes que pagan individualmente una prima anual de $\$5500$ al principio de cada año. Basándose en experiencia previa, se estima que la probabilidad de que un cliente haga un reclamo es $p= 0$. Solo un reclamo por año, independientemente del número de reclamos previos de otros cliente. El tamaño X de los reclamos varía, y tiene la siguiente densidad $$f(x)=\frac{\alpha\beta^{\alpha}}{(x+\beta)^{\alpha+1}}I(x\ge 0) $$. Con $\alpha=5$ y $\beta=125000$
+Suponemos las fortunas de la compañía aseguradora sobre un horizonte de 5 años. Sea $Z(t)$ los activos de la compañía al final del año $t$,así que $Z(0)=1000000$ y $Z(t)=I(Z(t-1)>0)max(Z(t-1)+primas-reclamos,0)$. Notar que si $Z(t)$ cae bajo 0, entonces la compañía se va a la bancarrota y deja de operar.
+*Calcular $F(X), E(X), Var(X)$. Obtener por simulación una muestra de X y su función de distribución, comparar el estimado con la verdadera.
+*Escriban una función para simular los activos de la compañía por cinco años y estimen la probabilidad de que la compañía se vaya a bancarrota y los activos esperados al final de cinco años.
+*Toma de ganancias. Supongan ahora que la compañía toma ganancias al final de cada año. Si $Z(t)>1000000$ entonces $Z(t)-1000000$ se le paga a los accionistas. Si $Z(t)\le 1000000$ entonces los accionistas no reciben nada ese año. Estimar la probabilidad de irse a la quiebra, los activos esperados después de 5 años y las ganancias totales esperadas después de cinco años.
+
+###Solución 
+
+$$F_{X}=\int_{0}^{x} \frac{\alpha\beta^{\alpha}}{(s+\beta)^{\alpha+1}}ds=\alpha\beta^{\alpha}\int_{0}^{x} \frac{1}{(+\beta)^{\alpha+1}}ds=\alpha\beta^{\alpha}\int_{\beta}^{\beta+x} \frac{1}{u^{\alpha+1}}du\\
+=\alpha\beta^{\alpha} \left( \frac{-u^{-\alpha}}{\alpha}\right) \Big|_{\beta}^{\beta+x} = 1-\left(\frac{\beta}{\beta+x}\right)^\alpha$$
+
+Para el cálculo de la esperanza notemos que X es una v.a no negativa, entonces se puede proceder de manera más sencilla por medio de la función de supervivencia $S(x)=1-F_{X}(x)$
+$$E[X]=\int_{0}^{\infty}x(1-F_{X}(x))dx=\int_{0}^{\infty}\frac{\beta^{\alpha}}{(x+\beta)^{\alpha}}dx=\frac{\beta}{\alpha-1}$$
+
+De manera alternativa podemos considerar a Y distribuida Pareto del tipo I, sabemos que $E[Y]=\frac{\alpha\beta}{\alpha-1}$. Entonces sea $X=Y-\beta$, se tiene que $E[X]=E[Y]-\beta=\frac{\alpha\beta}{\alpha-1}-\beta$.
+
+Partiendo de la transformación anterior se tiene que $Var(X)=Var(Y)=\frac{\alpha^{2}}{(\alpha-1)^{2}(\alpha-2)}; \alpha>2$.
+
+Ahora obtendremos por medio de simulación una muestra de X y su función de distribución
+
+```{r Sim_Pareto_Lomax}
+Pareto_Lomax<-function(a,b,n){
+  u<-runif(n)
+  Lomax_MA<-c()
+  for (i in 1:n) {
+  Lomax_MA[i]<-(b*(1-(1-u[[i]])^(1/a)))/((1-u[[i]])^(1/a))
+  }
+  return(Lomax_MA)
+}
+
+hist(Pareto_Lomax(2,125000,1000),main = "Histograma de X",xlab = "",ylab = "Frecuencia")
+```
+
+Realizamos la simulación de los activos de la compañía en un horizonte de cinco años.S upondremos además que la aseguradora siempre renueva la póliza con el cliente, esto es que una vez que un cliente reclama se le vuelve a vender la póliza al año siguiente.
+
+```{r Sim_activos}
+registro<-function(activos,prima,n_clientes,prob_reclamo){
+registro_activos<-c()
+registro_activos[1]<-activos 
+for (i in 2:6) {
+reclamos<-rbinom(n_clientes,1,prob_reclamo)
+monto_reclamos<-Pareto_Lomax(5,125000,sum(reclamos))
+registro_activos[i]<-registro_activos[i-1]-sum(monto_reclamos)+n_clientes*prima
+if(registro_activos[i-1]<=0){ 
+  registro_activos[i]<-0
+  }
+}
+return(registro_activos)
+}
+
+activos<-10e6
+prima<-5500
+n_clientes<-1000
+prob_reclamo<-0.1
+
+huella<-matrix(,100,6)
+for (i in 1:100) {
+  huella[i,]<-registro(activos =activos, prima = prima, n_clientes = n_clientes,prob_reclamo = prob_reclamo)
+}
+
+colnames(huella)<-c("z(0)","z(1)","z(2)","z(3)","z(4)","z(5)")
+huella<-as.data.frame(huella)
+head(huella)
+
+```
+
+Notemos que hasta el momento no hemos visto ningún caso de ruina. Estudiemos un esquema en el que si el registro de activos en el periodo excede cierta cantidad, entonces se recompensa a los accionistas.
+
+```{r}
+
+registro_acc<-function(activos,prima,n_clientes,prob_reclamo){
+registro_activos<-c()
+registro_activos[1]<-activos 
+for (i in 2:6) {
+reclamos<-rbinom(n_clientes,1,prob_reclamo)
+monto_reclamos<-Pareto_Lomax(5,125000,sum(reclamos))
+if(registro_activos[i-1]<=0){
+  registro_activos[i:6]<-0
+}
+else if(registro_activos[i-1]>1000000){
+registro_activos[i]<-registro_activos[i-1]-(10e6)-sum(monto_reclamos)+n_clientes*prima
+}
+else{registro_activos[i]<-registro_activos[i-1]-sum(monto_reclamos)+n_clientes*prima
+}
+}
+return(registro_activos)
+}
+
+activos<-10e6
+prima<-5500
+n_clientes<-1000
+prob_reclamo<-0.1
+
+huella<-matrix(,100,6)
+for (i in 1:100) {
+  huella[i,]<-registro_acc(activos =activos, prima = prima, n_clientes = n_clientes,prob_reclamo = prob_reclamo)
+}
+
+colnames(huella)<-c("z(0)","z(1)","z(2)","z(3)","z(4)","z(5)")
+huella<-as.data.frame(huella)
+head(huella)
+```
+
+Notemos que bajo este esquema en el que los accionistas son recompensados, la probabilidad de quiebra es 1.
+
+##Problema 3
+Proponer algoritmos (método y pseudocódigo o código, así como una corrida) para generar muestras de las siguientes densidades.
+
+*Cauchy $f(x)=\frac{1}{\pi\beta\left[1+(\frac{x-\gamma}{\beta})^2\right]}; \gamma,x\in \mathbb{R}; \beta>0$
+
+###Solución
+Podemos encontrar la distribución de X como $F_X(x)=\frac{arctan(\frac{x-\gamma}{\beta})}{\pi}+\frac{1}{2}$, entonces $F^{-1}(u)=tan(\pi(u-\frac{1}{2}))$. Usamos el método de la transformada inversa
+
+```{r Sim_Cauchy}
+cauchy<-function(gamma,beta,n){
+u<-runif(n)
+u<-tan(pi*u)*beta+gamma
+return(u)
+}
+x<-1:100
+hist(cauchy(0,1,5000),probability=T,breaks=100,main = "Cauchy(0,1) n=5000",ylab = "",xlab = "")
+curve(dcauchy(x),add=T,from=-100,to=100)
+
+U<- numeric(1000)
+n<-1000
+prom<-numeric(n)
+y<-c()
+for (i in 1:n) {
+  u<-runif(1000)
+  x<-tan(pi*(u-0.5))
+  prom[i]<-mean(x)
+}
+plot(1:n,prom[1:n],type="l",lwd=2,col="blue",main = "Media distribución Cauchy")
+
+
+
+```
+
+*Gumbel $f(x)=\frac{1}{\beta} exp\left[-e^{-\frac{(x-\gamma)}{\beta}}-\frac{x-\gamma}{\beta}\right]}; \gamma,x\in \mathbb{R}; \beta>0$.
+
+###Solución
+
+```{r Sim_Gumbel}
+gumbel<-function(gamma,beta,n){
+unif<-runif(n)
+unif<--beta*log(-log(unif))+gamma
+return(unif)
+}
+hist(gumbel(0,1,5000),probability =T,breaks=60,xlab = "",ylab="",main = "Distribución Gumbel")
+
+n_s<-c(seq(50,5000,by=50))
+X_est<-c()
+for (i in 1:length(n_s)) {
+  X_est[i]<-sum(gumbel(0,1,n_s[i]))/n_s[i]
+}
+
+plot(n_s[1:length(n_s)],X_est[1:length(n_s)],type = "l",col="blue",main = "", xlab = "n",ylab = "Xest",main="Media Gumbel")
+
+```
+
+
+*Logística $f(x)=\frac{\frac{1}{\beta}exp^{-(x-\gamma)/\beta}}{(1+exp^{-(x-\gamma)/\beta})^2};\gamma,x\in \mathbb{R}; \beta>0 $
+
+###Solución
+
+Para esto utilizaremos el hecho de que si $X\sim U(0,1)$, entonces $\gamma+\beta(log(X)-(1-X))\sim log(\gamma,\beta)$
+
+```{r Sim_logistica}
+Dist_logistica<-function(n,g,b){
+u<-runif(n)
+x<-g+b*(log(u)-1+u)
+return(x)
+}
+
+hist(Dist_logistica(5000,0,1),probability =T,breaks=60,main = "Distribución logística",xlab = "",ylab = "")
+
+n_s<-c(seq(50,5000,by=50))
+X_est<-c()
+for (i in 1:length(n_s)) {
+  X_est[i]<-sum(Dist_logistica(n_s[i],0,1))/n_s[i]
+}
+
+plot(n_s[1:length(n_s)],X_est[1:length(n_s)],type = "l",col="blue",main = "", xlab = "n",ylab = "Xest",main="Media distribución logística")
+
+
+
+```
+
+*Pareto $f(x)=\frac{\alpha_2c^{\alpha_2}}{x^{\alpha_x+1}}; c>0,\alpha_2>0,x>c$.
+
+###Solución
+
+$$F_X=\int_c^x\frac{\alpha_2c^{\alpha_2}}{s^{\alpha_x+1}}ds=\alpha_2c^{\alpha_2}\frac{s^{-\alpha_2}}{-\alpha_{2}}\Big|_{c}^{x}=1-(\frac{c}{x})^{\alpha_{2}}$$.
+
+$$F^{-1}(u)=\frac{c}{(1-u)^{\frac{1}{\alpha_2}}}$$
+
+```{r Sim_Pareto}
+S_pareto<-function(n,c,alfa){
+  u<-runif(n)
+  x<-c/(1-u)^(1/alfa)
+  return(x)
+}
+
+hist(S_pareto(5000,1,2),probability =T,breaks=60,main = "Distribución Pareto",xlab = "",ylab = "")
+
+
+n_s<-c(seq(50,5000,by=50))
+X_est<-c()
+for (i in 1:length(n_s)) {
+  X_est[i]<-sum(S_pareto(n_s[i],1,2))/n_s[i]
+}
+
+plot(n_s[1:length(n_s)],X_est[1:length(n_s)],type = "l",col="blue",main ="", xlab = "n",ylab = "Xest","Media distribución Pareto")
+```
+
+##Problema 4
+Grafiquen las siguientes densidades. Dar los algoritmos de transformación inversa, composición y aceptación-rechazo para cada una de las siguientes densidades. Discutir cuál algoritmo es preferible para cada densidad.
+
+$$f(x)=\frac{3x^2}{2}I(x)_{[-1,1]}$$
+
+$$f(x)=\begin{cases} 0,x\le0 \\ \frac{x}{a(1-a)}, 0\le x\le a\\ \frac{1}{1-a}, a\le x \le 1-a \\ \frac{1-x}{a(1-a)},1-a\le x \le 1\\ 0, x\ge 1 \end{cases}$$
+
+###Solución
+
+```{r}
+ind<-function(x,a,b){
+ifelse(x<=b & x>= a,1,0)
+}
+
+f1<-function(x){
+(3*(x^2)/2)*ind(x,-1,1)
+}
+
+F1<-function(x){
+ifelse(x<=-1,0,ifelse(x<=1,0.5*(x^3+1),1))
+}
+
+x<-seq(-1.5,1.5,length=200)
+par(mfrow=c(1,2))
+plot(x,f1(x),type="l",main="f1(x)")
+plot(x,F1(x),type = "l",main = "F1(x)")
+```
+
+```{r}
+f2<-function(x,a=0.25){
+ind(x,-1,1)*(ind(x,0,a)*(x/(a*(1-a)))+ind(x,a,1-a)/(1-a)+ind(x,1-a,1)*((1-x)/(a*(1-a))))
+}
+
+F2<-function(x,a=0.25){
+ind(x,0,a*x^2/(2*a*(1-a))+(x-a/2)/(1-a)*ind(x,a,1-a)+((1-3*a/2)/(1-a)+(x*(1-x/2)-(1-a)*(1+a)/2)/(a*(1-a)))*ind(x,1-a,1)+ind(x,1,100))
+}
+
+par(mfrow=c(1,2))
+x<-seq(-1.1,1.1,length=200)
+plot(x,f2(x),type="l",main="f2(x)")
+plot(x,F2(x),type="l",main="F2(x)")
+
+```
+
+##Problema 5
+Considerando la transformación polar de Marsaglia para generar muestras de normales estándar, muestren que la probabilidad de aceptación de $S=V_{1}^{2}+V_{2}^{2}$ en el paso 2 es $\frac{\pi}{4}$. Encuentre la distribución del número de rechazos de S antes de que ocurra una aceptación. ¿Cuál es el número esperado de ejecuciones del paso 1?
+
+###Solución
+
+Notemos que gráficamente estamos trabajando con un circulo unitario dentro de un cuadrado de 1x1, se acepta si $S=V_{1}^{2}+V_{2}^{2}$ cae dentro del circulo, y se rechaza si cae en el área restante. Entonces la probabiidad de aceptación es el área del circulo unitario $A=\frac{\pi r^2}{2}=\frac{\pi}{4}$. Para modelar la distribución del número de rechazos de S antes de una aceptación, basta con definir $X\sim Geo(p)$ donde $p$ es la probabilidad de aceptación, en este caso $\frac{\pi}{4}$. Finalmente $E[X]=\frac{1-p}{p}=3\pi$.
+
+
+
+##Problema 6
+Obtengan una muestra de 1,000 números de la siguiente distribución discreta, para $k=100$.
+$$p(x)=\frac{2x}{k(k+1)}; x=1,2,...k$$
+
+###Solución
+
+```{r fun_discreta}
+x <-sample(1:100,size=1000,replace=T,prob=c(seq(1:100)*(2/10100)))
+x[1:50]
+hist(x,main = "Histograma distribución discreta",ylab = "")
+```
+
+##Problema 7
+Desarrollen un algoritmo para generar una variable aleatoria binomial, usando la técnica de convolución (Hint: ¿cuál es la relación entre la distribución binomial y Bernoulli?). Generar una muestra de 100,000 números. ¿Qué método es más eficiente, el de convoluciones o la función rbinom en R?
+
+```{r Sim_binom}
+s_Binom<-function(n,t,p){ 
+  esp_muestral<-c(0,1)
+  muestra_Binom<-c()
+  for (i in 1:n) {
+  muestra_Binom[i]<-sum(sample(esp_muestral,t,replace = TRUE,prob = c(p,1-p)))
+  }
+  return(muestra_Binom)
+}
+```
+
+
+```{r tiempo}
+ptm <- proc.time()
+prueba1<-s_Binom(1,100000,0.4)
+proc.time()-ptm
+
+```
+
+```{r tiempo2}
+ptm<-proc.time()
+prueba2<-rbinom(1,100000,0.4)
+proc.time()-ptm
+```
+
+Resulta más eficiente realizar una muestra de 100000 números con la función rbinom.
+
+##Problema 8
+Para un proceso Poisson no homogéneo con función de intensidad dada por:
+$$\lambda(t)=\begin{cases}5,t\in(1,2],(3,4],(5,6]... \\3,t\in(0,1],(2,3],(4,5]...\end{cases}$$
+
+```{r}
+lambdat<-function(t){
+x<-paste("","{",0,"<=t & t<",1,"}",sep="")
+for(i in seq(2,100,2)){
+x<-paste(x,paste("","{",i,"<=t & t <",1+i,"}",sep=""),sep="|")
+}
+return(ifelse(eval(parse(text=0)),3,5))
+}
+poissonnohomogeneo<-function(lambdat,n,pic=T){
+	lambda<-5
+	TT<-rexp(n,lambda)
+	s<-cumsum(TT)
+	u<-runif(n)
+	ss<-s[u<=lambdat(s)/lambda]
+	Ns<-1:length(ss)
+	if(pic==T){
+	plot(ss,Ns,type="s",xlab="",ylab="N(t)",main="Proceso Poisson no homogéneo")
+	return(list(ss,cuenta=Ns))
+}
+}
+poissonnohomogeneo(lambdat,510)
+```
+
+
+##Problema 9
+Simular  un  proceso  Poisson  no  homogéneo  con  función  de  intensidad  dada  por $\lambda(t)=sin(t)$.
+
+###Solución
+
+```{r}
+lambdat2<-function(t){sin(t)}
+
+poissonnohomogeneo2<-function(lambdat,n,pic=T){
+	lambda<-1
+	TT<-rexp(n,lambda)
+	s<-cumsum(TT)
+	u<-runif(n)
+	ss<-s[u<=lambdat(s)/lambda]
+	Ns<-1:length(ss)
+	if(pic==T){
+	plot(ss,Ns,type="s",xlab="",ylab="N(t)",main="Proceso Poisson no homogéneo")
+	return(list(ss,cuenta=Ns))
+}
+}
+poissonnohomogeneo(lambdat,50)
+
+```
+
+##Problema 10
+Una compañía de seguros tiene 1000 asegurados, cada uno de los cuales presentará de manera independiente una reclamación en el siguiente mes con probabilidad $p=0.09245$. Suponiendo que las cantidades de los reclamos hechos son variables aleatorias normales con media 7000 y desviación estándar 5000, hagan simulación para estimar la probabilidad de que la suma de los reclamos exceda $500,000.
+
+###Solución
+
+```{r}
+comp_seguros<-function(n_as,p,m,de){
+  n_rec<-sum(rbinom(n,1,p))
+  montos_rec<-rnorm(n_rec,m,de)
+  tot_rec<-sum(montos_rec)
+}
+
+registro<-replicate(10000,comp_seguros(1000,0.09245,7000,5000))
+p_exceder<-length(subset(registro,registro>500000))/10000
+p_exceder
+
+```
+
+##Problema 11
+Escribir una función para generar una mezcla de una distribución normal multivariada con dos componentes con medias $ \mu_1,\mu_2$ y matrices de covarianzas $S_1,S_2$ respectivamente.
+Con el programa, generar una muestra de tamaño $n = 1000$ observaciones de una mezcla 50% de una normal 4-dimensional con $\mu_1 = (0,0,0,0), \mu_2 = (2,3,4,5)$, y matrices de covarianzas $S_1 = S_2 = I_4$. 
+Obtener los histogramas de las 4 distribuciones marginales
+
+###Solución
+```{r}
+r_normal_multi <-function(n,mu,Sigma){
+d <-length(mu)
+S <-svd(Sigma)
+Q <- S$u %*%diag(sqrt(S$d)) %*%t(S$v)
+Z <-matrix(rnorm(n*d),nrow=n, ncol=d)
+X <- Z %*% Q +matrix(mu,n,d,byrow=T)
+X
+}
+
+Sigma <-matrix(c(1, 0, 0,0, 0, 1, 0, 0, 0,0,1,0,0,0,0,1),byrow=T,nrow=4)
+n<-1000
+
+Y1<-r_normal_multi(n,c(0,0,0,0),Sigma = Sigma)
+Y2<-r_normal_multi(n,c(2,3,4,5),Sigma = Sigma)
+u <-runif(n)
+k <-as.integer(u > 0.5)
+Y <- k*Y1 + (1-k)*Y2
+
+head(Y)
+
+par(mfrow=c(2,2))
+
+hist(Y[,1],xlab = "",ylab = "",main = "Histograma Y1",breaks = 50)
+hist(Y[,2],xlab = "",ylab = "",main = "Histograma Y2",breaks = 50)
+hist(Y[,3],xlab = "",ylab = "",main = "Histograma Y3",breaks = 50)
+hist(Y[,4],xlab = "",ylab = "",main = "Histograma Y4",breaks = 50)
+
+```
+
+
+##Problema 12
+Distribución de Wishart. Suponer que $M = X^{T}X$, donde $X$ es una matrix de n x d de una muestra aleatoria de una distribución $N_d (\mu,Σ)$. Entonces $M$ tiene una distribución Wishart con matriz de escala $Σ$ y $n$ grados de libertad, y se denota $W\sim W_{d}(Σ,n)$. Cuando $d=1$, los elementos de $X$ son una muestra aleatoria de una $N(\mu,\sigma^2)$, por lo que $W_1(\sigma^2,n)\sim σ^2χ2$.
+Una forma de generar observaciones de una distribución Wishart, es generar muestras de multivariadas normales y calcular la matriz producto $XX^T$. Programar este método. Noten que este método es muy costoso porque se tienen que generar $nd$ valores aleatorios normales para determinar las $d(d + 1)/2$ diferentes entradas de $M$. 
+
+```{r}
+Wishart_1<-function(n,mu,s){
+  X<-r_normal_multi(n,mu,s)
+  B<-X%*%t(X)
+  return(B)
+
+}
+
+Wishart_ma<-function(tm,n,mu,s){
+  replicate(tm,Wishart_1(n,mu,s))
+}
+
+#Ejemplo
+ptm<-proc.time()
+Wishart_ma(4,4,c(1,1),matrix(c(1, 0, 0,1),byrow=T,nrow=2))
+proc.time()-ptm
+```
+
+Un método más eﬁciente se basa en la descomposición de Bartlett: sea $T = (T_{ij})$ una matriz triangular inferior de d×d con entradas independientes que satisfacen: $T_{ij}\sim N(0,1)$ independientes para $i>j$, $T_{ii}\sim \sqrt{\chi_{n-i+1}^{2}}, i=1,..,d$.
+Entonces la matrix $A=TT^{'}$ tiene una distribución $W_d(I_d,n)$. Para generar variables $W_d(\Sigma,n)$, obtener la descomposición de Cholesky $\Sigma=LL^{'}$, donde $L$ es triangular inferior. Entonces $LAL^{'}\sim W_d(\Sigma,n)$.
+
+```{r}
+Wishart_2<-function(s,n){
+  TE<-r_normal_multi(n,c(rep(0,n)),diag(n))
+  A<-TE%*%t(TE)
+  L<-chol(s)
+  RET<-L%*%A%*%t(L)
+  return(RET)
+}
+
+Wishart2_ma<-function(tm,n,s){
+  replicate(tm,Wishart_2(s,n))
+}
+
+#Ejemplo
+ptm<-proc.time()
+Wishart2_ma(4,4,matrix(c(1, 0, 0,1),byrow=T,nrow=2))
+proc.time()-ptm
+```
+
+
+
+##Problema 13
+Las ocurrencias de huracanes que tocan tierra durante el fenómeno meteorológico “el Niño” se modelan como un proceso Poisson (ver Bove et al (1998)). Los autores aseguran que "durante un año del Niño, la probabilidad de dos o más huracanes haciendo contacto con tierra en los Estados Unidos es 28 %”. Encontrar la tasa del proceso Poisson.
+
+##Problema 14
+Comenzando a mediodía, los comensales llegan a un restaurante de acuerdo a un proceso  Poisson  a  una  tasa  de  5  clientes  por  minuto.  El  tiempo  que  cada  cliente pasa comiendo en el restaurante tiene una distribución exponencial con media de 40 minutos, independiente de otros clientes e independiente de los tiempos de arribo. Encuentra la distribución así como la media y varianza, del número de comensales
+en el restaurante a las 2:00pm. Simular el restaurante para verificar los resultados obtenidos.
+
+##Problema 15
+
