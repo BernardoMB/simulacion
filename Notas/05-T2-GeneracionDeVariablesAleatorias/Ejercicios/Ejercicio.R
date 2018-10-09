@@ -1,3 +1,5 @@
+lambda <- .5
+
 #Muestrear la mitad de una distribucion normal
 fn<-function(x){2/sqrt(2*pi)*exp(-(x^2)/2)}
 g<-function(x,lambda)lambda*exp(-x*lambda)

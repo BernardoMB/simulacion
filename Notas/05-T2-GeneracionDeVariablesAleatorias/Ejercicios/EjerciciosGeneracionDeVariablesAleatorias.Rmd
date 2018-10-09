@@ -183,7 +183,7 @@ sum(x>3)/10000
 pnorm(3,lower.tail = F)
 ```
 
-###Método Box-Müller
+###Método Box-MÃ¼ller
 
 Este método se basa en la transformación a coordenadas polares. Genera pares de variables aleatorias normales independientes
 
@@ -232,4 +232,3 @@ Algunos problemas podrían mejorarse permutando los números uniformes antes de 
 	plot( R*cos(2*pi*th), R*sin(2*pi*th), pch=16, cex=0.2)	
 
 ```
-
