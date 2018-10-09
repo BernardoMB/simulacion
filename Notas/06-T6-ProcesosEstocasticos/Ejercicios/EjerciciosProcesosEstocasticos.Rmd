@@ -1,0 +1,294 @@
+---
+title: "Laboratorio Simulación - Procesos"
+author: "Jorge de la Vega"
+date: "24 de septiembre de 2018"
+output: 
+  html_document:
+    code_folding: hide
+
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ejemplos de simulación de Procesos Estocásticos {.tabset .tabset-pills}
+
+## Cadena de Markov {.tabset}
+
+### Cadenas de Markov finitas
+
+Ejercicio: Supongamos que una máquina está en uno de tres estados: El estado 1 es activa, el estado 2 es trabajando y el estado 3 es descompuesta. Simulen el proceso para 100 trayectorias de longitud 1000 (lo más vectorizado posible) si la distribución inicial de probabilidad es $\pi_0=(0.5,0.5,0)$. La matriz de transiciones de probabilidad está dada por: 
+
+$$P = \begin{pmatrix} 1/3 & 1/3 & 1/3 \\ 0 & 1/3 & 1/3 \\ 0 & 1/2 & 1/2 \end{pmatrix} $$
+1. Obtener la proporción de los estados del proceso en $t=100$
+2. Obtener la proporción de los últimos 100 estados visitados por la trayectoria 1, 10 y 100. Â¿Qué estado es más visitado?
+
+
+Solución:
+```{r}
+N <- 100 #Numero de trayectorias
+tiempo <- 1000 #longitud de las trayectorias
+P <- matrix(c(1/3,0,0,1/3,2/3,1/2,1/3,1/3,1/2),nrow=3)
+X0 <- sample(1:3, N, prob=c(0.5,0.5,0), rep=T) #vector de estados iniciales para las 10 trayectorias
+
+simulaciones <- c()  # guarda las taryectorias del proceso
+X <- c()             # proceso
+for(i in 1:N){
+  X[1] <- X0[i] 
+  for(j in 2:(tiempo+1))X[j] <- sample(1:3, 1, prob =P[X[j-1], ])
+    simulaciones <- cbind(simulaciones,X)
+}
+
+#para 1:
+X100 <- simulaciones[tiempo+1,]
+table(X100)/sum(table(X100))
+
+#para 2:
+X1_100 <- simulaciones[(tiempo-100):tiempo, c(1,10,100)]
+apply(X1_100,2,function(x)table(x)/sum(table(x)))
+```
+
+
+### Caminatas aleatorias simples en los enteros.
+
+Los elementos de la matriz de transición están dados por la siguiente ecuación:
+
+$$ P_{i,j} = \begin{cases} p_i & j=i+1 \\ q_i & j=i-1 \\ 0 & j\neq i\pm 1\end{cases}, p_i+q_i=1 $$
+La caminata puede recorrer todos los enteros, y en caso de ser acotada, debe haber condiciones de frontera, como reflecciones o absorsión.
+
+Ejercicio: Simular 1000 observaciones de una caminata aleatoria con probabilidades aleatorias, comenzando en $X_0=5$.
+
+Se requiere un valor inicial para la variable aleatoria, digamos $X_0$, y sea $S_0=X_0$ y $S_k=\sum_{i=0}^k X_k = S_{k-1}+X_k$ El algoritmo es el siguiente para $i=1,2,\ldots$:
+
+1. Genera $p_i \sim U(0,1)$ y define $q_i=1-p_i$.
+2. Calcula $X_i \sim Ber(\{1,-1\},p_i)$
+3. Calcula $S_i=S_{i-1} +X_k$
+
+```{r}
+tiempo <- 10000  #longitud de la cadena
+S <- X<- 5 #algún valor inicial
+for(i in 2:tiempo){
+  p <- runif(1)
+  X[i] <- sample(c(1,-1),1,prob=c(p,1-p))
+  S[i] <- S[i-1] + X[i]
+}
+plot(S,type="l")
+hist(S,breaks=20,prob=T)
+```
+
+Ejercicio: Para probabilidades de transición que no dependen de  $i$, por ejemplo una caminata aleatoria simétrica, simula 1000 observaciones comenzando en $X_0=0$
+
+1. Â¿Cuál es el tiempo promedio que se tarda en regresar al 0 una vez que se está en él?
+
+```{r}
+tiempo <- 1000000
+X0 <- 0
+X <- sample(c(-1,1),size=tiempo,rep=T)
+S <- cumsum(c(X0,X))
+plot(S,type="l")
+abline(h=0)
+hist(S,breaks=20,prob=T)
+```
+
+
+### Caminata aleatoria general
+
+Los elementos de la matriz de transición están dados por la siguiente ecuación:
+
+$$ P_{i,j} = \begin{cases} p_i & j=i+1 \\ r_i & j=i \\ q_i & j=i-1 \\ 0 & j\notin \{i-1,i,i+1\} \end{cases}, p_i+r_i+q_i=1 $$
+```{r}
+tiempo <- 10000  #longitud de la cadena
+S <- X <- sample(-10:10,1)  #algún valor inicial
+for(i in 2:tiempo){
+  a <- runif(3)
+  p <- a/sum(a)  #normaliza el vector de probabilidades
+  X[i] <- sample(c(1/2,0,-1/2),1,prob=p)
+  S[i] <- S[i-1] + X[i]
+}
+plot(S,type="l")
+hist(S,breaks=20,prob=T)
+```
+
+## Proceso de Wiener {.tabset}
+
+### Proceso Browniano simple
+
+Ejercicio: Simular un proceso browniano (o de Wiener) en el intervalo $t\in [0,1]$ con $n=1000$ puntos. En este ejercicio podemos notar el comportamiento fractal del proceso Browniano si cambiamos el valor de $t$ a valores más chicos o más grandes.
+
+```{r}
+n <- 1000 #partición
+tiempo <- 1  #simulación en el intervalo [0,tiempo] = [0,1]
+delta <- tiempo/n #incrementos de la partición del intervalo
+B <- cumsum(c(0, rnorm(n, 0, sqrt(delta)))) #usando la versión acumulativa
+a <- seq(0, tiempo, by=delta) # puntos de la partición del intervalo [0,tiempo]
+plot(a, B, type="l",main="Movimiento browniano",xlab="t", ylab="B(t)")
+```
+
+2. Escribir una función que genere el proceso de Wiener con la opción de guardar N trayectorias, y que incluya cuantiles del 95% aproximados de la distribución normal de $B(t)$ para $t\in(0,1)$ 
+
+```{r}
+dB <- function(n, TT){
+  #Esta función genera un proceso de Wiener con n observaciones
+  dt <- TT/n  # incremento del intervalo para obtener n puntos.
+  return(cumsum(c(0, rnorm(n, 0, sqrt(dt)))))
+}
+
+plot(a, dB(1000,1), type = "l", main = "Browniano en [0,1]", ylim = c(-3,3))
+abline(h=0)
+for(i in 1:10) lines(a, dB(1000,1), col = "red") #simula 10 trayectorias
+lines(a, -2*sqrt((0:1000)/1000), lty = 2)
+lines(a,  2*sqrt((0:1000)/1000), lty = 2)
+```
+
+3. Generar un proceso Browniano en el espacio, considerando cada uno de sus componentes como un proceso Browniano simple. Este ejemplo se refiere típicamente como "el andar del borracho"
+
+```{r}
+par(pty="s")
+plot(dB(10000,1), dB(10000,1), type = "l")
+```
+
+### Simulación de un proceso generalizado de Wiener
+
+El proceso generalizado de Wiener agrega una tendencia al proceso simple de Wiener.
+Por ejemplo, si $a=2$, $b=0.5$,
+
+```{r}
+dBg <- function(n,TT,a,b){
+  #Función para un proceso Browniano Geométrico
+  dt <- TT/n  # incremento del intervalo para cubrir [0,TT] en n puntos
+  dB <- c(0,cumsum(rnorm(n,0,sqrt(dt))))
+  dBG <- a*cumsum(rep(TT/n,n+1)) + b*dB
+}
+
+plot(a,dBg(1000,1,3,0.5),type="l",ylim=c(-3,3))
+for(i in 1:10) lines(a,dBg(1000,1,2,0.5),col="red") #simula 10 trayectorias.
+lines(a,dB(1000,1),col="blue",lwd=3)
+abline(a = 0,b = 3,lwd=4)
+abline(h=0)
+```
+
+### Simulación de un proceso de Wiener Geométrico
+
+El caso del movimiento Browniano geométrico es que corresponde al precio de un instrumento financiero. 
+
+Si $S_t$ denota el precio del instrumento en el tiempo $t$, entonces 
+$$S_t = S_{t-1}e^{(\mu-\sigma^2/2)dt+b\sqrt{dt}\epsilon} $$
+Donde $\mu$ denota el rendimiento instantáneo del instrumento financiero y $\sigma^2$ denota la volatilidad en la unidad de tiempo.
+
+Esta ecuación se deriva de considerar que el rendimiento del instrumento se puede espresar en función del precio como 
+$$\frac{dS_t}{S_t} = \mu dt + \sigma dB  $$
+y para resolver la ecuación usamos la transformación $G=\log S_t$ y aplicamos las fórmulas de ItÃ´.
+
+```{r}
+
+BGeo <- function(n,TT,a,b,S0=100){
+         #Función para generar un proceso Browniano Geométrico
+  dt <- TT/n #incremento de los intervalos para cubrir [0,TT]
+  S <- S0
+  for(i in 2:(n+1)){
+    S <- append(S, S[i-1]*exp((a-b^2/2)*dt + b*sqrt(dt)*rnorm(1)))
+  }
+  return(S)
+}
+plot(a,BGeo(1000,1,0.3,0.5),type="l")
+```
+
+### Puente Browniano
+
+El puente Browniano es un tipo de proceso basado en un proceso del mismo tipo que tiene la siguiente propiedad: Si $\{Z_t\}$ es un proceso Browniano, el proceso condicional ${B_t}|B_1=0$ para $t\in [0,1]$. Esto significa que el proceso tiene valor 0 en los extremos del intervalo $[0,1]$. Tiene aplicación por ejemplo para evaluar derivados financieros. 
+
+Se puede ver que $B_t = Z_t-tZ_1$ es un puente browniano, lo que define cómo se puede simular.
+
+```{r}
+par(pty="s"); par(mfrow=c(2,3));par(mar=c(1,3,1,3))
+n <- 1000 #número de puntos en partición
+t <- seq(0,1,length=n) #partición del [0,1]
+for(i in 1:6){
+Z <- c(0,cumsum(rnorm(n-1)))/sqrt(n)
+B <- Z-t*Z[n]
+plot(t,B,type="l")
+abline(h=0);points(c(0,1),c(0,0),col="red",pch=16)}
+```
+
+
+## Procesos Poisson {.tabset}
+
+Hay varias versiones a considerar:
+
+1. Proceso Poisson homogéneo (PPH)
+2. Proceso Poisson No homogéneo (PPNH)
+3. Proceso Poisson espacial (PPE)
+
+### Proceso Poisson homogéneo
+
+El algoritmo para simular un proceso de Poisson hasta el tiempo $T$ es:
+
+1. Genera tiempos de interarribo exponenciales $\tau_j\sim \exp(\lambda)$
+2. Calcula la suma acumulada $S_n =\sum \tau_j$ tal que $S_n <T$
+3. Define $N_t=min\{n|S_n>T\}-1$
+
+Ejercicio: simula un PPH con $\lambda=2$ y tiempo de simulación $T=20$
+
+```{r}
+tiempo <- 20
+lambda <- 2
+tau <- rexp(100,lambda) #genera un número de tiempos de arribo (no previamente determinado)
+Tn <- cumsum(tau)  #tiempo acumulado
+Nt <- min(which(Tn>tiempo))-1 #Valor del Proceso Poisson
+plot(Tn[1:(Nt+1)],0:Nt,type="s", main="Proceso Poisson homogéneo",ylab="Nt",xlab="t")
+```
+
+### Proceso Poisson No homogéneo
+
+Para simular un proceso Poisson no homogéneo con intensidad $\lambda(t)$ hasta el tiempo $T$, encontramos una $\lambda_0$ que mayorice a $\lambda(t)$ en el intervalo $[0,T]$: $\lambda(t)\leq \lambda_0 \quad \forall t\in [0,T]$. Entonces simulamos un PPH con tasa $\lambda_0$ y aceptamos un tiempo de arribo en $t$ con probabilidad $p_0=\lambda(t)/\lambda_0$. 
+
+El algoritmo es el siguiente:
+1. Genera tiempos de interarribo $\tau_j\sim \exp(\lambda_0)$
+2. Calcula la suma acumulada $S_n=\sum \tau_j$ tal que $S_n<T$.
+3. Aceptar $S_n$ con probabilidad $\lambda(S_n)/\lambda_0$ creando una nueva sucesión $S^*_n$.
+4. Entonces $N^*_T= min\{n|S^*_n>T\}-1$ es el proceso no homogéneo.
+
+Ejercicio: Simula un PPNH con intensidad $\lambda(t)=3t^2$ hasta el tiempo $T=10$
+
+### Proceso Poisson espacial
+
+Un proceso Poisson espacial modela distribución de eventos en el espacio, por ejemplo: árboles de cierta especie en un bosque, distribución de galaxias en el espacio, clústers de cierta enfermedad en un mapa.
+
+Si $p \geq 1$ y $A\subset \mathcal{R}^p$, sea $N_A$ el número de eventos o puntos en el conjunto $A$. $\{N_A|A\subset \mathcal{R}^p\}$ es un proceso Poisson espacial con parámetro $\lambda$ si 
+
+1. Para cada conjunto acotado $A$, $N_A \sim \mathcal{P}(\lambda|A|)$ donde $|A|$ es el tamaÃ±o de $A$ (área, volumen, etc.)
+2. Si $A\cap B=\emptyset$, entonces $N_A$ es independiente de $B$.
+
+1. Escribir el código para generar un círculo de radio r y centro en c1 y c2.
+2. Simula un proceso Poisson espacial en $A=[0,1]^2$, y $\lambda=100$.
+
+```{r eval=FALSE, include=FALSE}
+circulo <- function(c1,c2,r,add,...){
+#función auxiliar para dibujar círculos
+    x <- seq(-r,r,length.out=1000)
+    y <- sapply(x, function(z) sqrt(r^2-z^2))
+    if(add){
+        lines(c1 + c(x,rev(x)),c(c2+y,c2+rev(-y)),type="l",...)
+    } else {
+        plot(c1 + c(x,rev(x)), c(c2+y,c2+rev(-y)),type="l",...)
+    }
+}
+```
+
+```{r eval=FALSE, include=FALSE}
+PPoiS <- function(lambda,A,c1,c2,r){
+# Genera un proceso Poisson espacial en un cuadrado de área A^2 y cuenta el
+# número de puntos en el circulo centrado en (c1,c2) de radio r
+N <- rpois(1,lambda*A^2)
+xpoints <- runif(N)
+ypoints <- runif(N)
+ct <- sum((xpoints-c1)^2 + (ypoints-c2)^2 <= r^2) #número de puntos en el circulo
+par(pty = "s")
+plot(xpoints, ypoints, xlab = "x", ylab = "y", pch=20)
+circulo(c1,c2,r,add=T)
+return(ct)
+}
+```

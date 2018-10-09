@@ -1,0 +1,41 @@
+---
+title: "Reducción de Varianza"
+author: "Jorge de la Vega"
+date: "9 de octubre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Integración de Monte Carlo
+
+1. Calcular un estimado por Monte Carlo de la integral $\int_0^1 sen(t)^{cos(t)}\, dt$. 
+  - Estima la integral para tamaÃ±os de muestra $n = 100:10000(50)$
+  - Calcular un estimador de la varianza de tu estimado de Monte Carlo, y un intervalo de confianza del 95\%.
+  
+2. Calculen un estimado $\hat{\theta}$ de $\theta = \int_0^{0.5} e^{-x}\, dx$ muestreando observaciones $U(0,0.5)$, y estima la varianza de $\hat{\theta}$.
+  - Encuentra otro estimador $\theta^*$ muestreando de la distribución exponencial. 
+  - ¿Cuál de las varianzas (de $\hat{\theta}$ y $\theta^*$) es más chica y por qué?
+
+3. Calcular la integral $\theta = \int_0^{\infty}x^{-x}\, dx$, usando una muestra de tamaÃ±o 10,000.
+
+4. Monte Carlo también puede aproximar sumas. Resuelvan $\sum_{i=1}^{\infty}\frac{\log i}{3^i}$ utilizando Monte Carlo.
+
+5. Resuelvan la integral en $\mathrm{R}^3$:
+\[ I = \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}\int_{-\infty}^{\infty} sen(x^2+2y-z)e^{-(x^2+y^2+z^2)/2\,dx\,dy\,dz} \]
+
+6. Graficar y calcular la integral de la función $\theta=\int_0^1sen^2(1/x)\,dx$ por el método de aceptación-rechazo.
+
+# 2. Técnicas de Reducción de varianza (Parte 1)
+
+1. Variables antitéticas: aplica variables antitéticas a la integral del problema 1 y calculen el porcentaje de reducción de varianza si es que hay.
+
+2. Variables de control: estimar $\theta=E(e^(U+W)^2)$ con $U,W$ iid $\mathcal{U}(0,1)$, 
+
+3. Condicionamiento: Un proyecto de construcción tiene una duración $X|(\mu,\sigma^2) \sim \mathcal{N}(\mu,\sigma^2)$ donde $\mu \sim \mathcal{N}(100,16)$ y $\sigma^2\sim exp(1/4)$, con $\mu \perp  \sigma^2$. La compaÃ±ía que construye debe pagar 1000 USD por cada día (y prorata por partes de día) que la duración del proyecto excede $K$ días.    ¿Cuál es el costo esperado del retraso?
+
+    - Calcular usando MC usual y usando condicionamiento.
+
+
