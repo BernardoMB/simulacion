@@ -61,7 +61,7 @@ $$f_X(x)=\frac{\alpha\beta^\alpha}{(x+\beta)^{\alpha+1}}I_{[0,\infty)}(x)$$
 con $\alpha=5$ y $\beta=125000$ (Tal $X$ tiene una distribución Pareto, la cual es frecuentemente usada para modelar el monto de un siniestro).
 Suponemos las fortunas de la compañía aseguradora sobre un horizonte de $5$ años. Sea $Z(t)$ el valor de los activos de la compañía al final del $t$-ésimo año, de manera que que $Z(0)=1000000$ y $$Z(t)=\max(Z(t-1)+P(t)-S(t),0)$$
 donde $P(t)$ es el monto de las primas pagadas durante el $t$-ésimo año y $S(t)$ es el monto de los siniestros pagados durante el $t$-ésimo año. Notar que si $Z(t)$ cae bajo $0$, entonces la compañía se va a la bancarrota y deja de operar.
-\begin{itemize}
+\begin{enumerate}
 \item Calcular $F_X(x)$, $E(X)$ y $Var(X)$. Obtener por simulación una muestra de $X$ y hallar los valores estimados de las cantidades anteriores y compararlos con los valores teóricos.
 \item Escriban una función para simular los activos de la compañía por cinco años y estimar lo siguiente: (1) La probabilidad de que la compañía se vaya a la bancarrota. (2) Los activos esperados al final del quinto año.
 \item Si el valor de los activos rebasan la cantidad de $\$1000000$, entonces el excedente se reparte entre los accionistas como dividentos de manera que si $D(t)$ son los dividendos pagados al final del $t$-ésimo año, entonces 
@@ -70,7 +70,7 @@ $$D(t)=\begin{cases}
 0 & \mathrm{si} \quad Z(t) \leq 1000000 \\
 \end{cases}.
 $$ Bajo este nuevo esquema, estimar (1) la probabilidad de irse a la quiebra, (2) los activos esperados después de $5$ años, y (3) las ganacias totales esperadas después de $5$ años de operación.
-\end{itemize}
+\end{enumerate}
 
 \textbf{Solución:} 
 
@@ -534,6 +534,23 @@ proc.time()-ptm
 
 # Problema 13
 Las ocurrencias de huracanes que tocan tierra durante el fenómeno meteorológico “el Niño” se modelan como un proceso Poisson (ver Bove et al (1998)). Los autores aseguran que "durante un año del Niño, la probabilidad de dos o más huracanes haciendo contacto con tierra en los Estados Unidos es 28 %”. Encontrar la tasa del proceso Poisson.
+
+\textbf{Solución:}
+
+Sea $N$ el número de huracánes que tocan tierra en Estados Unidos, de manera que $N$ tiene una distribución $Po(\lambda)$. Se sabe que $Pr\{N\ge2\}=0.28$, entonces
+
+$$\begin{aligned}
+  0.28 &= Pr\{N\ge2\} \\
+       &= 1-Pr\{N<2\} \\
+            &= 1-Pr(N=0)-Pr(N=1)  \\
+            &= 1-\frac{\lambda^0e^{-\lambda}}{0!}-\frac{\lambda^1e^{-\lambda}}{1!}.
+\end{aligned}$$
+
+Resolviendo para $\lambda$ se tiene que $\lambda=1.042284919$.
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
 
 # Problema 14
 Comenzando a mediodía, los comensales llegan a un restaurante de acuerdo a un proceso  Poisson  a  una  tasa  de  5  clientes  por  minuto.  El  tiempo  que  cada  cliente pasa comiendo en el restaurante tiene una distribución exponencial con media de 40 minutos, independiente de otros clientes e independiente de los tiempos de arribo. Encuentra la distribución así como la media y varianza, del número de comensales
