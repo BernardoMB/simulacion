@@ -1,0 +1,346 @@
+---
+title: "Laboratorio Simulación - Más ejemplos de procesos"
+author: "Jorge de la Vega"
+date: " 2 de octubre de 2018"
+output: 
+  html_document:
+    code_folding: show
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Series de tiempo con modelos ARIMA (Box-Jenkins).
+
+Haremos un breve repaso de la notación necesaria para simular series de tiempo tipo ARIMA.
+
+## Series estacionarias
+
+Una serie de tiempo $\{y_t\}$ es _estacionaria_ si cumple lo siguiente:
+
+- tiene media constante (no depende del tiempo $t$): $E(y_t)=\mu\qquad \forall  t$.
+- Si las autocovarianzas de la serie (y por lo tanto las autocorrelaciones) no dependen de $t$, sino  sólo del número de rezagos en la diferencia: $Cov(y_t,y_{t-j})=\gamma_{j}$.
+
+De hecho, podemos definir la autocorrelación (poblacional) en términos de las autocovarianzas como $\rho_j = \frac{\gamma_j}{\gamma_0}$.
+
+En términos prácticos, una serie es estacionaria si no hay crecimiento o decrementos en los datos. Los datos deben fluctuar alrededor de una media constante, y la varianza no debe de aumentar o disminuir con el tiempo. Un ejemplo de un proceso estacionario es el _ruido blanco_ que es un modelo en el que cada observación se compone de dos partes:
+
+- un nivel constante $c$ y un componente de error $\epsilon_t$ que es independiente de cualquier periodo,
+   $$ y_t=c+\epsilon_t $$
+Este modelo puede ser \emph{simulado} usando un generador de números aleatorios normales, como la función `rnorm`.
+
+```{r}
+n <- 200 #longitud de la serie
+yt <- 1 + rnorm(n)
+plot.ts(yt, type = "o", main = "Simulación de ruido blanco", pch = 16, cex = 0.7)
+abline(h = c(0,1), col = c("black","red"))
+```
+
+
+Cuando la serie de tiempo es un ruido blanco, las propiedades de la función de autocorrelación son bien conocidas, y esto nos puede ayudar.
+ 
+- Si $\{\epsilon_t\}$ es ruido blanco, entonces $r_k \sim N(0, 1/n)$ para $k>0$, donde $n$ es el número de observaciones en la serie. Así que 95\% de los coeficientes de autocorrelación deben estar entre $\pm 1.96/\sqrt{n}$, que son los límites críticos incluídos en las gráficas.
+- También las autocorrelaciones parciales deben ser cercanas a 0 cuando el modelo es un modelo de ruido blanco.
+
+```{r}
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T)) #Acomodo de las gráficass
+plot.ts(yt, main="Ruido blanco")
+acf(yt)
+pacf(yt)
+```
+
+### Identificando estacionariedad
+ 
+ 
+Necesitamos un mecanismo para verificar si una serie es estacionaria, que es a través de las funciones que definimos: `acf` y `pacf`. Las autocorrelaciones de datos estacionarios tienden a 0 relativamente rápido, mientras que para series no estacionarias, los coeficientes son significativamente diferentes de 0 para varios rezagos.
+
+Por ejemplo, la siguiente serie no es estacionaria, y lo podemos ver en sus funciones de autocorrelación:
+
+```{r}
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T))
+y2t <- 1:n/10 + rnorm(n)
+plot.ts(y2t, main = "Serie no estacionaria")
+acf(y2t)
+pacf(y2t)
+```
+
+    
+La pacf usualmente tiene un pico cerca de 1 en el primer rezago, y  luego coeficientes no significativos.
+
+## Series no estacionarias
+
+Si una serie es no estacionaria, lo que es relativamente más fácil de identificar, la podemos volver estacionaria tomando diferencias de distintos órdenes de la serie original:
+    
+- 1a. dif: $\Delta y_t = y_t- y_{t-1}$
+- 2a. dif: $\Delta^2y_t = \Delta (\Delta y_t) = \Delta y_t -\Delta y_{t-1} = y_t-2y_{t-1}+y_{t-2}$.
+- 3a. dif] $\Delta^2y_t = \Delta (\Delta^2 y_t) = \ldots$.
+
+A continuación veremos los componentes típicos de las series en los modelos de Box-Jenkins.
+
+## Modelos MA
+
+Un _modelo de promedios móviles_ de orden $q$ es un modelo de la forma:
+   
+$$y_t = \mu + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \cdots + \theta_q \epsilon_{t-q} + \epsilon_t $$
+donde  $\{\epsilon_t\}$ es una serie de ruido blanco.
+
+Cuando $q = \infty$, a la serie se le llama un _filtro lineal_. A este tipo de procesos se le llama promedio móvil porque es una especie de promedio móvil del ruido blanco  $\{\epsilon_t\}$, con pesos dados por los coeficientes $\theta_1,\theta_2,\ldots$.
+
+Para simular un proceso MA(3), por ejemplo, de longitud $n$, generamos una serie de ruido blanco y consideramos una fórmula recursiva:
+
+```{r}
+n <- 1000  #longitud del proceso
+theta <- c(-0.2,0.3,0.4)  #vector de coeficientes del promedio móvil
+mu <- 1  #media
+eps <- rnorm(n+3)     #ruido blanco
+ma3 <- NULL
+for(i in 4:(n+3)) 
+  ma3[i] <- mu + theta[1]*eps[i-1] + theta[2]*eps[i-2] + theta[3]*eps[i-3] + eps[i]
+ma3c <- ma3[4:(n+3)] #corrige los índices del proceso
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T))
+plot.ts(ma3c, main=paste0("MA(",length(theta),"), alfa=(",paste(theta,collapse = ","),")"))
+acf(ma3c)
+pacf(ma3c)
+```
+
+
+## Modelos AR
+
+Un modelo autorregresivo de orden $p$, que se denota por  $AR(p)$ es un modelo de la forma:
+
+ $$ y_t = \mu + \phi_1 y_{t-1}+\phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \epsilon_t $$
+
+donde $\epsilon_t \sim N(0,\sigma^2_{\epsilon})$, y los  errores son independientes. En este modelo los predictores de la observación $y_t$ son sus propios rezagos en el tiempo.
+
+Los modelos $AR$ pueden ser estacionarios o no estacionarios, dependiendo de las restricciones que se impongan sobre los pesos del modelo. La función de autocorrelación de un $AR(1)$ es $\rho_k = \phi_1^k, \quad k=0,1,2,\ldots$.
+
+Por ejemplo, consideremos simular un proceso $AR(3)$ a continuación
+
+```{r}
+n <- 1000  #longitud del proceso
+phi <- c(-0.2,0.3,0.4)  #vector de coeficientes del promedio móvil
+mu <- 1  #media
+eps <- rnorm(n+3)     #ruido blanco
+ar3 <- mu + eps[1]         # inicializa el proceso
+ar3[2] <- mu + phi[1]*ar3[1] + eps[2] 
+ar3[3] <- mu + phi[1]*ar3[2] + phi[2]*ar3[1] + eps[3] 
+for(i in 4:n) 
+  ar3[i] <- mu + phi[1]*ar3[i-1] + phi[2]*ar3[i-2] + phi[3]*ar3[i-3] + eps[i]
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T))
+plot.ts(ar3, main=paste0("AR(",length(phi),"), phi=(",paste(phi,collapse = ","),")"))
+acf(ar3)
+pacf(ar3)
+```
+
+
+### Operador rezago (lag)
+ 
+Definan al operador rezago como la función $L$ (de _lag_) tal que
+ $$ L a_t = a_{t-1}$$
+En general, $L^ja_t=a_{t-j}$. 
+
+Los modelos $AR$ y $MA$ pueden simplificarse usando esta notación, ya que podemos escribirlos como _polinomios_ en el operador $L$.
+
+Un polinomio en $L$ de orden $k$ es de la forma
+$$ \Phi_k(L)=\phi_0L^0+\phi_1L^1+\cdots \phi_kL^k,$$
+ donde $L^0=1$.
+
+Simplificando notación:
+
+- Un $MA(q)$, se puede escribir como
+ $$ y_t= \mu + \Theta_q(L)\epsilon_t $$
+donde $\Theta_q(L) = \theta_0L^0 + \theta_1L^1 + \theta_2L^2 + \cdots + \theta_qL^q$ y $\theta_0=1$.
+
+- Un $AR(p)$ se puede escribir como
+
+$$ \Phi_p(L)y_t = \alpha_0+\epsilon_t$$ 
+donde $\Phi_p(L)=1-\phi_1L^1-\phi_2L^2-\cdots-\phi_pL^p$.
+
+## Modelos ARMA
+
+Los modelos ARMA combinan modelos autorregresivos con modelos de promedios móviles para llegar a modelos más generales.
+ 
+Un modelo $ARMA(p,q)$ se escribe, usando notación de polinomios, como 
+$$ \Phi_p(L)y_t=\mu +\Theta_q(L)\epsilon_t $$
+Los modelos $ARMA$ sólo se pueden aplicar a series estacionarias. Para extender los modelos a series no estacionarias, se requiere diferenciar la serie. Esto da origen a los modelos $ARIMA$.
+
+
+## Modelos ARIMA
+
+Un modelo $ARIMA(p,d,q)$ es un modelo $ARMA(p,q)$ en donde la serie original $y_t$ se reemplaza por la serie diferenciada $\Delta^dy_t$. En la práctica, $d$ usualmente toma valores en $\{0,1,2\}$ y $p$ y $q$
+toman valores no mayores a 4, aunque esto no es una regla.
+
+Los modelos $AR$ y $MA$ son casos particulares de modelos $ARIMA$, ya que por ejemplo, un $AR(p)$ es lo mismo que un $ARIMA(p,0,0)$, o un $MA(q)$  es un $ARIMA(0,0,q)$.
+
+
+### Simulación de modelos ARIMA con la función `arima.sim`
+
+Vemos que simular procesos ARIMA puede ser complejo, ya que hay que considerar ecuaciones recursivas, rezagos y diferencias. Para simplificar el procedimiento de simulación, se puede usar la función `arima.sim`. Esta función supone que no hay constante en el modelo ($\mu=0$). 
+
+Por ejemplo, para simular un proceso $ARMA(2,2)$, se usa la siguiente sintaxis:
+
+```{r}
+n <- 200
+orden  <- c(2,2)
+phis   <- c( 0.9,-0.2)
+thetas <- c(-0.7, 0.1)
+arma22 <- arima.sim(model = list(ar = phis, ma = thetas), n = n)
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T))
+plot.ts(arma22, main = paste0("ARMA(", paste(orden, collapse = ","),")"))
+acf(arma22,lag.max = 20)
+pacf(arma22,lag.max = 20)
+```
+
+Â¿Cómo debería ser la función **teórica** de un acf y pacf de un proceso $ARMA(2,2)$? Podemos verla con la función `ARMAacf` (no hay una función equivalente para ARIMAs habría que integrar la serie):
+
+```{r}
+par(mfrow=c(1,2))
+plot(0:20, ARMAacf(ar = phis, ma= thetas, lag.max = 20, pacf = F),ylab="acf")
+segments(x0=0:20, y0 =rep(0,21), y1 = ARMAacf(ar = phis, ma= thetas, lag.max = 20, pacf = F))
+plot(1:20, ARMAacf(ar = phis, ma= thetas, lag.max = 20, pacf = T), ylab="pacf",ylim=c(0,1))
+segments(x0=1:20, y0 =rep(0,20), y1 = ARMAacf(ar = phis, ma= thetas, lag.max = 20, pacf = T))
+```
+
+
+Un $ARIMA(2,3,2)$ se puede simular de la siguiente manera:
+
+```{r}
+n <- 200
+orden <- c(2,3,2) #vector con los coeficientes (p,d,q)
+arima232 <- arima.sim(model = list(order = orden, ar = c(.9,-.2), ma = c(-.7,.1)), 
+                          n = n)
+layout(matrix(c(1,1,2,3),nrow=2,byrow=T))
+plot.ts(arima232, main=paste0("ARIMA(",paste(orden,collapse=","),")"))
+acf(arima232, main = paste0("ARIMA(",paste(orden,collapse=","),")"),lag.max = 20)
+pacf(arima232, main = paste0("ARIMA(",paste(orden,collapse=","),")"),lag.max = 20)
+```
+
+
+
+Ahora consideraremos algunos ejemplos con más detalle de varios de estos procesos y de sus funciones de autocorrelación y autocorrelación  parcial.
+
+### Casos particulares
+
+Es posible identificar los parámetros de un modelo $ARIMA$ a través de conocer sus funciones `acf` y `pacf` teóricas. Aplicaremos lo que veamos a series de tiempo reales para ver cómo se procedería, a grandes rasgos. 
+
+##### $AR(1)$
+
+- El modelo es $y_t=\mu + \phi_1y_{t-1} + \epsilon_t$.
+- En lo que sigue, supondremos que la media de $y_t$ es $E(y_t) = \xi$.
+- Para que el proceso sea estacionario, se requiere que $|\phi_1|<1$.
+- La media, autocovarianza y autocorrelación son, respectivamente:
+    - $\xi = E(y_t) = \frac{\mu}{1-\phi_1}$.
+    - $\gamma_k=\phi_1^k\frac{\sigma_{\epsilon}^2}{1-\phi_1^2}$ para $k=0,1,2,\ldots$.
+    - $\rho_k=\phi_1^k$ para $k=0,1,2,\ldots$.
+
+La acf decrece exponencialmente cuando $\phi_1>0$ y oscila decayendo exponencialmente cuando $\phi_1<0$.
+    
+La pacf tiene un pico en el rezago 1, luego es 0; el pico es positivo si $\phi_1>0$, negativo si
+$\phi_1<0$.
+
+Ejemplo: $y_t = 2 + 0.2y_{t-1} +\epsilon_t$ con $\sigma_{\epsilon}=2$
+```{r}
+phi <- -0.2
+ar1 <- arima.sim(model = list(ar = phi),n = 2000, sd = 2) + 2
+layout(matrix(c(1,1,2,3), nrow = 2, byrow = T))
+plot.ts(ar1, main=paste0("AR(",length(phi),"), phi=(",paste(phi,collapse = ","),")"))
+acf(ar1)
+pacf(ar1)
+#Evaluamos los parámetros del modelo:
+mean(ar1)
+```
+
+
+##### $AR(2)$
+
+- El modelo es de la forma: $y_t = \mu +\phi_1y_{t-1}+ \phi_2y_{t-2} + \epsilon_t$. 
+- Para que el proceso sea estacionario, se requiere que se cumplan estas ecuaciones simultáneamente:
+    $\phi_1 + \phi_2 < 1$, $\phi_2 - \phi_1 < 1$ y $|\phi_2|<1$.
+- La media del proceso es $\xi = E(y_t)=\frac{\mu}{1-\phi_1-\phi_2}$.
+- El cálculo de la autocovarianza teórica es complicado. Las fórmulas  son recursivas (se conocen como ecuaciones de Yule-Walker):
+    
+    $$ \gamma_k = \begin{cases} \begin{matrix} \phi_1\gamma_1+\phi_2\gamma_2+\sigma_{\epsilon}^2 & \mbox{si
+    $k=0$} \\
+    \phi_1\gamma_{k-1}+\phi_2\gamma_{k-2} & \mbox{si $k>0$} \end{matrix} \end{cases} $$
+
+
+- Las autocorrelaciones se obtienen usando la ecuación $\rho_k=\phi_1\rho_{k-1}+\phi_2\rho_{k-2}$, para $k\geq 3$.
+- Los valores de $\rho_1$ y $\rho_2$ se obtienen de resolver el sistema de ecuaciones (una vez que se conocen los valores de $\phi_1$ y $\phi_2$):
+    
+\begin{eqnarray*}
+ \rho_1  &=& \phi_1+\phi_2\rho_1 \\
+ \rho_2  &=& \phi_1\rho_1+\phi_2 
+\end{eqnarray*} 
+
+
+- Si $\phi_1^2+4\phi_2\geq 0$, la acf es una mezcla de exponenciales decrecientes, y si $\phi_1^2+4\phi_2<0$, la autocorrelación es una onda sinusoidal decreciente.
+- la pacf tiene picos en los rezagos 1 y 2, luego son ceros.
+
+Ejemplo: $y_t = 2 + 0.2y_{t-1} -0.7y_{t-2} +\epsilon_t$ con $\sigma_{\epsilon}=2$
+```{r}
+phi <- c(0.2,-0.7)
+ar2 <- 2 + arima.sim(model = list(ar = phi),n = 2000, sd = 2)
+layout(matrix(c(1,1,2,3), nrow = 2, byrow = T))
+plot.ts(ar2, main=paste0("AR(",length(phi),"), phi=(",paste(phi,collapse = ","),")"))
+acf(ar2)
+pacf(ar2)
+#Evaluamos los parámetros del modelo:
+mean(ar2)
+```
+
+##### $MA(1)$
+
+- El modelo es $y_t=\mu+\epsilon_t -\theta_1\epsilon_{t-1}$.
+- El proceso es estacionario para cualquier valor de $\theta_1$.
+- La media, autocovarianza y autocorrelación son, respectivamente:
+  
+    - $E(y_t)=\mu$.
+    - $\gamma_0=\sigma_{\epsilon}^2(1+\theta_1^2)$ y
+    - $$\rho_k = \begin{cases} - \frac{\theta_1}{1+\theta_1^2} & \mbox{si $k=1$} \\0 & \mbox{si $k>1$}\end{cases}$$
+
+- La acf tiene un pico en $k=1$ y después es 0, positivo si $\theta_1>0$, negativo si $\theta_1<0$
+- La pacf tiene Decae exponencialmente: del lado negativo si $\theta_1<0$ y alternando en signo empezando en el lado positivo si $\theta_1>0$.
+
+Ejemplo: $y_t = 2 + \epsilon_t + 0.3\epsilon_{t-1}$ y $\sigma_{\epsilon}=3$
+
+```{r}
+theta <- c(-0.3)
+ma1 <- 2 + arima.sim(model = list(ma = theta),n = 2000, sd = 3)
+layout(matrix(c(1,1,2,3), nrow = 2, byrow = T))
+plot.ts(ma1, main=paste0("MA(",length(theta),"), theta=(",paste(theta,collapse = ","),")"))
+acf(ma1)
+pacf(ma1)
+#Evaluamos los parámetros del modelo:
+mean(ma1)
+```
+
+##### $MA(2)$
+
+ - El modelo es $y_t=\mu+\epsilon_t -\theta_1\epsilon_{t-1}-\theta_2\epsilon_{t-2}$.
+ - El proceso es estacionario para cualquier valor de $\theta_1$ y $\theta_2$.
+ - La media, autocovarianza y autocorrelación son, respectivamente:
+    
+    - $E(y_t)=\mu$.
+    - $\gamma_0 = \sigma_{\epsilon}^2(1+\theta_1^2+\theta_2^2)$ y
+    - $$ \rho_k = \begin{cases} -\frac{\theta_1(1-\theta_2)}{1+\theta_1^2+\theta_1^2} & 
+                 \mbox{si $k=1$} \\ -\frac{\theta_2}{1+\theta_1^2+\theta_1^2} & \mbox{si $k=2$} \\ 0 & 
+                 \mbox{si  $k>2$} \end{cases}$$
+  
+  - La acf tiene un picos en los rezagos 1 y 2 y después es 0.
+  - Decae exponencialmente en forma de función sinoidal decreciente. El patrón exacto depende de los signos y tamaños de $\theta_1$ y $\theta_2$.
+
+Ejemplo: $y_t = 2 + \epsilon_t + 0.3\epsilon_{t-1} - 0.7\epsilon_{t-2}$ y $\sigma_{\epsilon}=3$
+
+```{r}
+theta <- c(-0.3,0.7)
+ma2 <- 2 + arima.sim(model = list(ma = theta),n = 2000, sd = 3)
+layout(matrix(c(1,1,2,3), nrow = 2, byrow = T))
+plot.ts(ma2, main = paste0("MA(",length(theta),"), theta=(",paste(theta,collapse = ","),")"))
+acf(ma2)
+pacf(ma2)
+#Evaluamos los parámetros del modelo:
+mean(ma2)
+```

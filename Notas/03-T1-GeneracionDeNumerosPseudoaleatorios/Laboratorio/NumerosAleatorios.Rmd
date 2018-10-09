@@ -1,18 +1,7 @@
 ---
-title: 'Laboratorio: Ejercicios variables aleatorias'
-output:
-  html_document:
-    df_print: paged
-  html_notebook: default
-  pdf_document: default
+title: "Laboratorio: Ejercicios variables aleatorias"
+output: html_notebook
 ---
-
-```{r INSTALACION DE PAQUETES, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
-
-#install.packages(c("plot3D", "animation", "randtoolbox","rgl"))
-
-```
-
 
 # Números aleatorios uniformes
 
@@ -30,7 +19,7 @@ cm <- function(x){
     z <- z^2
     n <- nchar(z)
     if (n < 6) break 
-    #partiendo de un tamaño de 7 dígitos, escogemos los dígitos centrales y vamos recorriendo   
+    #partiendo de un tamaÃ±o de 7 dígitos, escogemos los dígitos centrales y vamos recorriendo   
     z <- as.numeric(as.character(substr(z,n-5,n-2)))
     u <- append(u,z/10000)
     if ((u[length(u)] == 0 ) | length(unique(u)) < length(u)) break #si el último número es 0 o ya se repiten termina
@@ -48,7 +37,7 @@ cm(1009)
 cm(898775)
 ```
 
-Considerando otro número para un ciclo más largo (por ejemplo $`r options(scipen=9); z0 <- 5675431 ; z0 `$), Â¿qué tan aleatorios se ven los números y cómo lo podemos verificar? ¿Qué pruebas podemos hacer para verificar aleatoriedad? Algunos ejemplos se muestran a continuación
+Considerando otro número para un ciclo más largo (por ejemplo $`r options(scipen=9); z0 <- 5675431 ; z0 `$), ¿qué tan aleatorios se ven los números y cómo lo podemos verificar? ¿Qué pruebas podemos hacer para verificar aleatoriedad? Algunos ejemplos se muestran a continuación
 
 ```{r}
 z0 <- 5675431
@@ -57,7 +46,7 @@ u
 ```
 
 
-Podemos probar para varios números de qué tamaño son las longitudes. Tomado los números de 556,734 a 1,000,000 (de 1,000 en 1,000) obtenemos
+Podemos probar para varios números de qué tamaÃ±o son las longitudes. Tomado los números de 556,734 a 1,000,000 (de 1,000 en 1,000) obtenemos
 
 ```{r}
 J <- seq(556734, 1000000, by = 100)
@@ -156,11 +145,11 @@ runif(10)
 El paquete *randtoolbox* facilita utilizar algunos generadores, por ejemplo:
 
 ```{r}
-library(randtoolbox)
 congruRand(10, mod=2^31-1, mult = 16807, incr = 0)
 ```
 
 ```{r}
+library(randtoolbox)
 library(rgl) #visualización en 3D
 #RANDU:
 x <- congruRand(1200,mod = 2^31, mult = 2^16 +3, incr = 0)
