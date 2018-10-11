@@ -23,3 +23,20 @@ nuevos pares de variables aleatorias? Dar una justificación a su respuesta.
 \begin{flushright}
 $\blacksquare$
 \end{flushright}
+
+# Problema 6
+
+En ciertas situaciones una variable aleatoria $X$ con media conocida, se simula para
+obtener una estimación de $Pr(X\leq a)$ para alguna constante $a$ dada. El estimador
+simple de una simulación para una corrida es 
+
+$$I=\frac{\# \mbox{ simulaciones mayores que }a}{\mbox{total de simulaciones}}$$
+
+\begin{enumerate}
+\begin{}
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
