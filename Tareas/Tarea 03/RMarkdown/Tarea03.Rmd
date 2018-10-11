@@ -553,8 +553,120 @@ $\blacksquare$
 \end{flushright}
 
 # Problema 14
-Comenzando a mediodía, los comensales llegan a un restaurante de acuerdo a un proceso  Poisson  a  una  tasa  de  5  clientes  por  minuto.  El  tiempo  que  cada  cliente pasa comiendo en el restaurante tiene una distribución exponencial con media de 40 minutos, independiente de otros clientes e independiente de los tiempos de arribo. Encuentra la distribución así como la media y varianza, del número de comensales
-en el restaurante a las 2:00pm. Simular el restaurante para verificar los resultados obtenidos.
+
+```{r, echo=FALSE}
+lambda <- 5
+t <- 120
+beta <- 1/40
+```
+
+Comenzando a medio día, los comensales llegan a un restaurante de acuerdo a un proceso de Poisson a una tasa de $\lambda=`r lambda`$ clientes por minuto. El tiempo que cada cliente pasa comiendo en el restaurante tiene una distribución exponencial con media de $\frac{1}{\beta}=`r 1/beta`$ minutos y es independiente del tiempo de los otros clientes e independiente de los tiempos de arribo de los clientes. Encuentra la distribución así como la media y varianza, del número de comensales en el restaurante a las 2:00pm. Simular el restaurante para verificar los resultados obtenidos.
+
+\textbf{Solución:}
+
+Sea $R_t$ el numero de clientes en el restaurante en el instante $t$ y $A_t$ el numero de clientes que han llegado hasta el tiempo $t$ de manera que $A_t$ es el proceso de Poisson con $\lambda=`r lambda`$ ($A_t$ es el proceso de llegada de los clientes). Por el teorema de probabilidad total se tiene que la función de masa de probabilidad de de $R_t$ está dada por 
+
+$$\begin{aligned}
+  Pr(R_t=k) &= \sum_{n=0}^{\infty}Pr(R_t=k|A_t=n)Pr(A_t=n) \\
+  &= \sum_{n=0}^{k-1}Pr(R_t=k|A_t=n)Pr(A_t=n) + \sum_{n=k}^{\infty}Pr(R_t=k|A_t=n)Pr(A_t=n) \\
+  &= 0 + \sum_{n=k}^{\infty}Pr(R_t=k|A_t=n)Pr(A_t=n) \\
+  &= \sum_{n=k}^{\infty} P(R_t=k|A_t=n)\frac{e^{-\lambda t}(\lambda t)^n}{n!}. \\
+\end{aligned}$$
+
+Suponiendo que al tiempo $t$ se ha registrado la llegada de $n$ clientes ($A_t=n$), sean $S_i$ y $L_i$ son los tiempos de arribo y de estancia del $i$-ésimo cliente respectivamente, para $i=1,2,\dots,n$, de manera que los clientes saldrán del restaurante en los siguientes tiempos de salida:
+
+$$S_1+L_1,\quad S_2+L_2,\quad \dots,\quad S_n+L_n.$$
+
+Se sigue que habrá $k$ clientes en el restaurante al tiempo $t$ si y sólo si $k$ de los timepos de salida son superiores al tiempo $t$. Entonces 
+
+$$\begin{aligned}
+Pr(R_t=k|A_t=n) &= Pr(k\mbox{ de los tiempos }S_1+L_1,\dots,S_n+L_n\mbox{ exceden } t| A_t=n) \\
+&= Pr(k\mbox{ de }U_{(1)}+L_1,\dots, U_{(n)}+L_n \mbox{ exceden } t) \\
+&= Pr(k\mbox{ de }U_{1}+L_1,\dots, U_{n}+L_n \mbox{ exceden } t) \\
+&= {n \choose k} p^k(1-p)^{n-k},
+\end{aligned}$$
+
+```{r, echo=FALSE}
+p <- 1-(1/(t*beta))+(exp(-t*beta)/(t*beta))
+```
+
+
+en donde 
+
+$$\begin{aligned}
+p &= Pr(U_1+L_1>t) \\
+&= \int_0^t Pr(U_1+L_1>t|U_1=x)Pr(U_1=x)\mbox{ d}x \\
+&= \frac{1}{t} \int_0^t Pr(L_1>t-x)\mbox{ d}x \\
+&= \frac{1}{t} \int_0^t 1-e^{-\beta(t-x)}\mbox{ d}x \\
+&= \frac{1}{t} \left[t - e^{-\beta t} \int_0^t e^{\beta x} \mbox{ d}x\right] \\
+&= \frac{1}{t} \left[t - \frac{e^{-\beta t}}{\beta} e^{\beta x}\Big|_0^t\right] \\
+&= 1-\frac{1}{t\beta}+\frac{e^{-t\beta}}{t\beta}. \\
+&= 1-\frac{1}{`r t`(\frac{1}{`r 1/beta`})}+\frac{e^{-`r t`(\frac{1}{`r 1/beta`})}}{`r t`(\frac{1}{`r 1/beta`})}\approx `r p` \\
+\end{aligned}$$
+
+Por lo que se tiene que 
+
+$$\begin{aligned}
+Pr(R_t=k) &= \sum_{n=0}^{\infty}Pr(R_t=k|A_t=n)Pr(A_t=n) \\
+&= \sum_{n=k}^{\infty} {n \choose k} p^k(1-p)^{n-k}\frac{e^{-\lambda t}(\lambda t)^n}{n!}I_{\{0,1,\dots\}}^{(k)} \\
+&= \frac{p^k(\lambda t)^k}{k!} \sum_{n=k}^{\infty}\frac{(1-p)^{n-k}(\lambda t)^{n-k}}{(n-k)!}I_{\{0,1,\dots\}}^{(k)} \\
+&= \frac{p^k(\lambda t)^k}{k!}e^{\lambda(1-p)t}I_{\{0,1,\dots\}}^{(k)} \\
+&= \frac{e^{-\lambda p t} (\lambda p t)^k}{k!}I_{\{0,1,\dots\}}^{(k)}. \\
+\end{aligned}$$
+
+Por lo tanto $R_t$ tiene una distribución Poisson con media $\lambda p t$:
+
+$$\begin{aligned}
+Pr(R_t=k) &= \frac{e^{-\lambda p t} (\lambda p t)^k}{k!}I_{\{0,1,\dots\}}^{(k)} \\
+&=  \frac{e^{-(`r lambda`)(`r p`)(`r t`)}[(`r lambda`)(`r p`)(`r t`)]^k}{k!}I_{\{0,1,\dots\}}^{(k)} \\
+&=  \frac{`r lambda*p*t`^ke^{-`r lambda*p*t`}}{k!}I_{\{0,1,\dots\}}^{(k)} \\
+\end{aligned}$$
+
+```{r echo=FALSE, fig.width=4, fig.height=3, fig.align = "center"}
+library(ggplot2)
+library(latex2exp)
+ggplot(data.frame(x=seq(0,700,by=70)), aes(x)) +
+  stat_function(geom="point", n=701, fun=dpois, args=list(lambda*p*t)) +
+  labs(x=TeX("k"), y=TeX("Pr(R_t=k)")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggtitle(TeX("Masa de probabilidad de R_t con t=120"))
+```
+
+A continuación se muestra un algoritmo que realiza 1000 simulaciones del proceso de llegada y salida de los clientes:
+
+```{r}
+N <- c()
+for (i in 1:1000) {
+  n <- 0
+  inter_arrivals <- c()
+  arrivals <- c()
+  stays <- c()
+  time <- 0
+  while (time <= t) {
+    inter_arrival <- rexp(1, lambda)
+    time <- time + inter_arrival
+    if (time <= t) {
+      #inter_arrivals <- c(inter_arrivals, inter_arrival)
+      arrival <- time
+      #arrivals <- c(arrivals, arrival)
+      stay <- rexp(1, beta)
+      #stays <- c(stays, stay)
+      if (arrival + stay <= 120) {
+        n = n + 1
+      }
+    }
+  }
+  N <- c(N, n)
+}
+hist(N)
+```
+
+
+
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
 
 # Problema 15
 

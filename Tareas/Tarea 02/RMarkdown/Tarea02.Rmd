@@ -298,7 +298,6 @@ chi <- chiTest[[3]]
 chi.pval <- chiTest[[4]]
 ```
 
-
 Para la prueba de bondad de ajuste $\chi^2$ de Pearson, las hipótesis a contrastar son las mismas que las de la prueba de Kolmogorov-Smirnov En este caso la estadistica de prueba toma el siguinete valor:
 
 $$\chi^2=\sum_{i=1}^{k}\frac{(N_j-np_j)^2}{np_j}=\sum_{i=1}^{`r length(chiTest[2])`}\frac{(N_j-10000p_j)^2}{10000p_j}=`r chi`$$
