@@ -9,6 +9,61 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Problema 1
+
+Consideren el siguiente modelo de líneas de espera con un servidor. Los tiempos de interarribo, así como los tiempos de servicio son independientes $U(0,1)$.
+Sea $A$, el tiempo de interarribo entre los clientes $i-1$ e $i$, y $S_i$ el tiempo de servicio del cliente $i$.$W_i$ es el tiempo de espera en fila del cliente $i$. La condición inicial es que el primer cliente en el sistema llega en el mismo tiempo 0. Entonces:$W_i=max[0,W_{i-1}+S_{i-1}-A_i]$, $i=2,3,...,100$, donde $W_1=0$. Escriban un programa para simular 5000 realizaciones del tiempo total de espera en la fila, junto con 5000 realizaciones antitéticas.
+
+\begin{enumerate}
+\item[a)] Usando un estimador combinado de las realizaciones primarias y antitéticas,estimar la esperanza del tiempo de espera de los 100 clientes y su error estándar estimado. Estimar el porcentaje de reducción de varianza.
+\item[b)] Repetir el experimento cuando la duración del servicio es $U(0,2)$. ¿Porqué se alcanza una reducción de varianza mucho mejor aquí que en (a)?
+\end{enumerate}
+
+\textbf{solución:}
+
+\begin{flushright} 
+$\blacksquare$
+\end{flushright} 
+
+# Problema 2
+
+Cinco elementos, numerados del 1 al 5 se acomodan inicialmente en un orden aleatorio. Esto es, el orden inicial es una permutación aleatoria de los números $[1,2,3,4,5]$.
+En cada estado del proceso, uno de los elementos es seleccionado y puesto en el frente de la lista. Por ejemplo, si el orden presente es $[2,3,4,1,5]$ y el elemento 1 se elige, entonces el nuevo orden es $[1,2,3,4,5]$. Supongan que cada selección es elemento $i$ con probabilidad $p_i$, donde las $p_{i}^{'}s$ son $(\frac{1}{15},\frac{2}{15},\frac{3}{15},\frac{4}{15},\frac{5}{15})$.
+Sea $L_j$ la variable que denota la posición del j-ésimo elemento seleccionado, y sea $L=\Sigma_{j=1}^{100}L_J$. Queremos usar simulación para estimar $E[L]$.
+
+\begin{enumerate}
+\item[a)] Expliquen cómo utilizarían simulación para estimar $E[L]$.
+\item[b)] Calculen $E[N_i]$ donde $N_i$ es el número de veces que el elemento $i$ es elegido en 100 selecciones.
+\item[c)] Sea $Y=\Sigma_{i=1}^{5}iN_{i}$. ¿Cómo se correlaciona Y con L?.
+\item[d)] Desarrollen un estudio para estimar $L$ usando $Y$ como variable de control.
+\end{enumerate}
+
+\textbf{solución:}
+
+\begin{flushright} 
+$\blacksquare$
+\end{flushright} 
+
+# Problema 3
+
+Sean $X$ y $Y$ dos independientes exponenciales con medias 1 y 2 respectivamente y supongan que queremos estimar $P(X+Y > 4)$. ¿Cómo utilizarían condicionamiento para reducir la varianza del estimador?. Digan si considerarían condicionar en $X$ o en $Y$ y por qué.
+
+\textbf{solución:}
+
+\begin{flushright} 
+$\blacksquare$
+\end{flushright} 
+
+# Problema 4
+
+Supongan que queremos estimar $\theta=\int_{0}^{1}e^{2}dx$. Muestren que generar un número aleatorio $u$ y usar el estimador $\frac{e^{u^{2}}(1+e^{1-2u})}{2}$, es mejor que generar dos números aleatorios $u_1$,$u_2$ y usar $\frac{(e^{u_{1}^{2}}+e^{u_{2}^{2}})}{2}$.
+
+\textbf{solución:}
+
+\begin{flushright} 
+$\blacksquare$
+\end{flushright} 
+
 # Problema 5
 
 Explicar cómo se pueden usar variables antitéticas en la simulación de la integral
@@ -28,12 +83,90 @@ $\blacksquare$
 
 En ciertas situaciones una variable aleatoria $X$ con media conocida, se simula para
 obtener una estimación de $Pr(X\leq a)$ para alguna constante $a$ dada. El estimador
-simple de una simulación para una corrida es 
+simple de una simulación para varias iteraciones es 
 
-$$I=\frac{\# \mbox{ simulaciones mayores que }a}{\mbox{total de simulaciones}}$$
+$$I=\frac{\# \mbox{ simulaciones mayores que }a}{\mbox{total de simulaciones}},$$
+y para una iteracion ($i=1$) es  
+
+$$I=I_{\{x_1\leq a\}}^{(x_1)}.$$
 
 \begin{enumerate}
-\begin{}
+\item[a)] Verificar que $I$ y $X$ están correlacionadas negativamente.
+\item[b)] Por el inciso anterior, un intento natural de reducir la varianza es usar $X$ como variable de control (esto es usar $Y_c=I+c(X-E(X))$. En este caso, determinar
+el porcentaje de reducción de varianza de $Y_c$ sobre $I$ si es posible (usando la
+mejor $c$ si $X\sim U[0,1]$.
+\item[c)] Repetir el inciso anterior si $X\sim\exp(1)$.
+\end{enumerate}
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 7
+
+El número de reclamos en una aseguradora que se harán la próxima semana depende de un factor ambiental $U$. Si el valor de este factor es $U=u$, entonces el número de reclamos tendrá distribución Poisson con media $\lambda=\frac{150}{0.5+u}$. Suponiendo que $U\sim U[0,1]$, sea $p$ la probabilidad de que habrá al menos $20$ reclamos la siguiente semana. 
+
+\begin{enumerate}
+\item[a)] Explicar cómo obtener una simulación cruda de $p$.
+\item[b)] Desarrollar un estimador de simulación eficiente usando esperanza condicional junto con una variable de control.
+\item[c)] Desarrollar un estimador de simulación eficiente usando esperanza condicional y variables antitéticas.
+\item[d)] Escriban un programa para determinar las varianzas de los incisos anteriores.
+\end{enumerate}
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 8
+
+Consideren la siguiente gráfica, representando una red puente:
+
+
+
+INSERTAR IMAGEN
+
+
+
+Supongan que queremos estimar la longitud esperada $l$ de la ruta más corta entre los nodos $A$ y $B$, donde las longitudes de los arcos son variables aleatorias $X_1,\dots X_5$.
+Entonces tenemos que $l=E[H(X)]$, donde 
+
+$$H(X)=\min[X_{1}+X_{4},X_{1}+X_{3}+X_{5},X_{2}+X_{3}+X_{4},X_{2}+X_{5}].$$
+
+Noten que $H(X)$ es no decreciente en cada componente del vector $x$. Supongan que las longitudes son independientes y $X_i\sim U[0,a_i]$, con $a=(1,2,3,4,5)$. Escribiendo $X_i=a_iU_i$ se puede restablecer el problema como la estimación de $l=E(h(U))$ con 
+$$h(U)=H(a_{1}U_{1},...,a_{5}U_{5}).$$
+
+\begin{enumerate}
+\item[a)]Obtener un estimador crudo de MonteCarlo para $l$.
+\item[b)] Obtener un estimador usando variables antiréticas. 
+\item[c)] Obtener un estimador usando variables de control.
+\item[d)] Obtener un estimador usando condicionamiento.
+\end{enumerate}
+
+En todos los casos anteriores, calcular la reducción de varianza obtenida y determinar el mejor método.
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 9
+
+Sea $S$ la suma de los resultados de lanzar 100 veces un dado honesto. Usen la desigualdad de Chebyshev para acotar $P(S\ge 380)$.
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 10
+
+Estimar usando MC crudo $\int_{-\infty}^{\infty} log(x^2)e^{-x^2}dx$ y aplicar dos técnicas de reducción de varianza a esta integral. Calcular la reducción con cada método.
 
 \textbf{Solución:}
 
