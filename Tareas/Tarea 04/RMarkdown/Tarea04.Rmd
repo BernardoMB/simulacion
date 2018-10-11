@@ -1,0 +1,25 @@
+---
+title: "Tarea 4 Simulacion"
+author: "Bernardo Mondragón Brozon, Diego García Santoyo, Rayan García Fabian, Karen Delgado Curiel"
+date: "13 de octubre de 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problema 5
+
+Explicar cómo se pueden usar variables antitéticas en la simulación de la integral
+
+$$\theta=\int_0^1\int_0^1e^{(x+y)^2}\mbox{ d}x\mbox{ d}y$$
+
+¿Es claro en este caso que usando variables antitéticas es más eficiente que generando
+nuevos pares de variables aleatorias? Dar una justificación a su respuesta.
+
+\textbf{Solución:}
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
