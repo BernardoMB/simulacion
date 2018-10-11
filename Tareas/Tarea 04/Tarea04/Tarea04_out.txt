@@ -1,0 +1,130 @@
+Simulación                                                              ITAM
+8 de octubre de 2018                                                    2018-II
+
+
+Tarea 4.
+
+  La fecha de entrega es el 19 de octubre.
+
+Lecturas
+    Robert & Casella Caps. 3 y 4.
+
+    Dagpunar Cap.5
+
+Problemas
+  1. Consideren el siguiente modelo de líneas de espera con un servidor. Los tiempos de
+    interarribo, así como los tiempos de servicio son independientes U (0, 1).
+
+    Sea Ai el tiempo de interarribo entre los clientes i − 1 e i y Si el tiempo de servicio
+    del cliente i. Wi es el tiempo de espera en ﬁla del cliente i. La condición inicial es
+    que el primer cliente en el sistema llega en el tiempo 0. Entonces:
+
+                           Wi = max{0, Wi−1 + Si−1 − Ai}
+
+    para i = 2, 3, . . . , 100, donde W1 = 0. Escriban un programa para simular 5000 reali-
+    zaciones del tiempo total de espera en la ﬁla, junto con 5000 realizaciones antitéticas.
+
+      a. Usando un estimador combinado de las realizaciones primarias y antitéticas,
+         estimar la esperanza del tiempo de espera de los 100 clientes y su error estándar
+         estimado. Estimar el porcentaje de reducción de varianza.
+      b. Repetir el experimento cuando la duración del servicio es U (0, 2). ¿Porqué se
+         alcanza una reducción de varianza mucho mejor aquí que en (a)?
+
+  2. Cinco elementos, numerados del 1 al 5 se acomodan inicialmente en un orden alea-
+    torio (esto es, el orden inicial es una permutación aleatoria de los números {1,2,3,4,5})
+    En cada estado del proceso, uno de los elementos es seleccionado y puesto en el
+    frente de la lista. Por ejemplo, si el orden presente es {2,3,4,1,5} y el elemento 1 se
+    elige, entonces el nuevo orden es {1,2,3,4,5}. Supongan que cada selección es, inde-
+                                                         0      1  2  3 4  5
+    pendientemente, elemento i con probabilidad pi, donde las pis son ( 15 , 15 , 15 , 15 , 15 ).
+    Sea Lj la variable que denota la posición del j-ésimo elemento seleccionado, y sea
+        P100
+    L =   j=1 Lj. Queremos usar simulación para estimar E(L)
+   (a) Expliquen cómo utilizarían simulación para estimar E(L).
+
+   (b) Calculen E(Ni) donde Ni es el número de veces que el elemento i es elegido en
+       100 selecciones.
+              P5
+   (c) Sea Y =  i=1 iNi ¿Cómo se correlaciona Y con L?
+   (d) Desarrollen un estudio para estimar L usando Y como variable de control.
+
+3. Sean X y Y dos independientes exponenciales con medias 1 y 2 respectivamente y
+  supongan que queremos estimar P (X+Y > 4). ¿Cómo utilizarían condicionamiento
+  para reducir la varianza del estimador? Digan si considerarían condicionar en X o
+  en Y y porqué.
+
+                                     R 1 x2
+4. Supongan que queremos estimar θ =  0 e dx. Muestren que generar un número
+                                2
+  aleatorio u y usar el estimador eu (1 + e1−2u)/2 es mejor que generar dos números
+                         u2   u2
+  aleatorios u1 y u2 y usar (e 1 + e 2 )/2.
+
+5. Explicar cómo se pueden usar variables antitéticas en la simulación de la integral
+
+                                 Z 1 Z 1
+                             θ =       e(x+y)2 dx dy
+                                  0  0
+  ¿Es claro en este caso que usando variables antitéticas es más eﬁciente que generan-
+  do nuevos pares de variables aleatorias? Dar una justiﬁcación a su respuesta.
+
+6. En ciertas situaciones una variable aleatoria X con media conocida, se simula para
+  obtener una estimación de P (X ≤ a) para alguna constante dada a. El estimador
+  simple de una simulación para una corrida es I = I(X ≤ a).
+
+       Veriﬁcar que I y X están correlacionadas negativamente.
+       Por el inciso anterior, un intento natural de reducir la varianza es usar X como
+       variable de control (esto es usar Yc = I + c(X − E(X)). En este caso, determinar
+       el porcentaje de reducción de varianza de Yc sobre I es es posible (usando la
+       mejor c si X es U (0, 1).
+       Repetir el inciso anterior si X es exponencial con media 1.
+
+7. El número de reclamos en una aseguradora que se harán la próxima semana de-
+  pende de un factor ambiental U. Si el valor de este factor es U = u, entonces el
+                                                         15
+  número de reclamos tendrá distribución Poisson con media 0.5+u . Suponiendo que
+  U  ∼ U (0, 1), sea p la probabilidad de que habrá al menos 20 reclamos la siguiente
+  semana.
+
+       Explicar como obtener una simulación cruda de p.
+       Desarrollar un estimador de simulación eﬁciente usando esperanza condicio-
+       nal junto con una variable de control
+        Desarrollar un estimador de simulación eﬁciente usando esperanza condicio-
+        nal y variables antitéticas.
+        Escriban un programa para determinar las varianzas de los incisos anteriores.
+
+ 8. Consideren la siguiente gráﬁca, representando una red puente:
+
+
+                               X1         X4
+
+                              A   X3       B
+
+                               X2         X5
+
+
+   Supongan que queremos estimar la longitud esperada l de la ruta más corta entre los
+   nodos A y B, donde las longitudes de los arcos son variables aleatorias X1, . . . , X5.
+   Entonces tenemos que l = E(H(X), donde
+
+             H(X) = m´ın{X1 + X4, X1 + X3 + X5, X2 + X3 + X4, X2 + X5}
+
+   Noten que H(x) es no decreciente en cada componente del vector x. Supongan que
+   las longitudes son independientes y Xi ∼ U (0, ai), con a = (1, 2, 3, 1, 2). Escribiendo
+   Xi = aiUi se puede restablecer el problema como la estimación de l = E(h(U)) con
+   h(U) = H(a1U1, . . . , a5U5).
+
+        Obtener un estimador crudo de MonteCarlo para l.
+        Obtener un estimador usando variabes antitéticas
+        Obtener un estimador usando variables de control.
+        Obtener un estimador usando condicionamiento.
+
+   En todos los casos anteriores, calcular la reducción de varianza obtenida y determi-
+   nar el mejor método.
+
+ 9. Sea S la suma de los resultados de lanzar 100 veces un dado honesto. Usen la de-
+   sigualdad de Chebyshev para acotar P (S ≥ 380).
+
+                           R ∞      2 −x2
+10. Estimar usando MC crudo: −∞ log(x )e dx y aplicar dos técnicas de reducción de
+   varianza a esta integral. Calcular la reducción con cada método.
