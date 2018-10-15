@@ -75,6 +75,15 @@ nuevos pares de variables aleatorias? Dar una justificación a su respuesta.
 
 \textbf{Solución:}
 
+El resultado exacto de la integral $I$ está dado por
+
+$$\theta=\int_0^1\int_0^1e^{(x+y)^2}\mbox{ d}x\mbox{ d}y=\sqrt{\pi}\left[-i\mbox{erf}(2i)+i\mbox{erf}(i)\right] - \frac{1}{2} + e -\frac{e^4}{2}\approx 4.89916.$$
+
+En donde $\mbox{erf}(x)=\frac{2}{\sqrt{\pi}}\int_0^xe^{-t^2}\mbox{ d}t$. Esta integral puede ser vista como el valor esperado de $f(U_1,U_2)$, en donde
+
+$$f(x,y)=e^{(x+y)^2}$$
+y, $U_1$ y $U_2$ son variables aleatorias uniformemente distribuidas en el intervalo $[0,1]$. Generando puntos aleatoriamente distribuidos en el cubo unitario 
+
 \begin{flushright}
 $\blacksquare$
 \end{flushright}
@@ -172,4 +181,4 @@ Estimar usando MC crudo $\int_{-\infty}^{\infty} log(x^2)e^{-x^2}dx$ y aplicar d
 
 \begin{flushright}
 $\blacksquare$
-\end{flushright}
+\end{flushrigh}t
