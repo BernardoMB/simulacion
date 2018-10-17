@@ -1,12 +1,14 @@
 ---
-title: "Tarea 4 Simulacion"
-author: "Bernardo Mondragón Brozon, Diego García Santoyo, Rayan García Fabian, Karen Delgado Curiel"
+title: "Tarea 4 Simulación"
+author: "Bernardo Mondragón Brozon, Rayan García Fabián, Diego García Santoyo, Karen Delgado Curiel"
 date: "13 de octubre de 2018"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+#install.package(gtools)
+#library("gtools")
 ```
 
 # Problema 1
@@ -14,12 +16,227 @@ knitr::opts_chunk$set(echo = TRUE)
 Consideren el siguiente modelo de líneas de espera con un servidor. Los tiempos de interarribo, así como los tiempos de servicio son independientes $U(0,1)$.
 Sea $A$, el tiempo de interarribo entre los clientes $i-1$ e $i$, y $S_i$ el tiempo de servicio del cliente $i$.$W_i$ es el tiempo de espera en fila del cliente $i$. La condición inicial es que el primer cliente en el sistema llega en el mismo tiempo 0. Entonces:$W_i=max[0,W_{i-1}+S_{i-1}-A_i]$, $i=2,3,...,100$, donde $W_1=0$. Escriban un programa para simular 5000 realizaciones del tiempo total de espera en la fila, junto con 5000 realizaciones antitéticas.
 
+```{r Linea_Espera_Prim,echo=FALSE}
+l_espera_prim <- function(numarrivals) {
+
+wait_time  <- 0          
+total_wait_time <- 0     
+total_idle_time <- 0     
+total_arrival_time <- 0  
+
+for (i in 1:numarrivals) {
+  service_time <- runif(1)    
+  interarival_time <- runif(1)  
+  total_arrival_time <- total_arrival_time + interarival_time
+  wait_time  <- wait_time - interarival_time + service_time
+
+  if (wait_time >= 0)
+    total_wait_time <- total_wait_time + wait_time
+  else {
+    total_idle_time <- total_idle_time - wait_time
+    wait_time  <- 0
+    }
+  }
+  
+result <- data.frame(Utilization=1-total_idle_time/total_arrival_time,
+		     TimeInQueue=total_wait_time/numarrivals,
+		     NumberInQueue=total_wait_time/total_arrival_time,
+		     TotalWaitTime=total_wait_time,
+		     TotalArrivalTime=total_arrival_time)
+}
+
+```
+
+```{r Linea_Espera_Ant,echo=FALSE}
+l_espera_ant <- function(numarrivals) {
+
+wait_time  <- 0          
+total_wait_time <- 0     
+total_idle_time <- 0     
+total_arrival_time <- 0  
+
+for (i in 1:numarrivals) {
+  service_time <- runif(1)    
+  interarival_time <- 1-runif(1)  
+  total_arrival_time <- total_arrival_time + interarival_time
+  wait_time  <- wait_time - interarival_time + service_time
+
+  if (wait_time >= 0)
+    total_wait_time <- total_wait_time + wait_time
+  else {
+    total_idle_time <- total_idle_time - wait_time
+    wait_time  <- 0
+    }
+  }
+  
+result <- data.frame(Utilization=1-total_idle_time/total_arrival_time,
+		     TimeInQueue=total_wait_time/numarrivals,
+		     NumberInQueue=total_wait_time/total_arrival_time,
+		     TotalWaitTime=total_wait_time,
+		     TotalArrivalTime=total_arrival_time)
+}
+```
+
+
+```{r realizaciones_primarias,echo=TRUE}
+espera_prim<-NULL
+for (i in 1:1000) {
+  sim_prim<-l_espera_prim(100)
+  espera_prim[i]<-sim_prim$TotalWaitTime
+}
+head(espera_prim)
+
+```
+
+```{r realizaciones_antiteticas,echo=TRUE}
+espera_ant<-NULL
+for (i in 1:1000) {
+  sim_ant<-l_espera_ant(100)
+  espera_ant[i]<-sim_ant$TotalWaitTime
+}
+head(espera_ant)
+
+```
+
 \begin{enumerate}
 \item[a)] Usando un estimador combinado de las realizaciones primarias y antitéticas,estimar la esperanza del tiempo de espera de los 100 clientes y su error estándar estimado. Estimar el porcentaje de reducción de varianza.
-\item[b)] Repetir el experimento cuando la duración del servicio es $U(0,2)$. ¿Porqué se alcanza una reducción de varianza mucho mejor aquí que en (a)?
-\end{enumerate}
 
 \textbf{solución:}
+
+```{r Esp_Var_DE_PRV,echo=TRUE}
+esp_tiempo_espera_prim=mean(espera_prim)
+var_tiempo_espera_prim=var(espera_prim)
+sd_tiempo_espera_prim=sqrt(var_tiempo_espera_prim)
+
+print(paste("Variables primarias"))
+print(paste("Esperanza del tiempo de espera:", esp_tiempo_espera_prim,sep=" "))
+print(paste("Varianza del tiempo de espera:", var_tiempo_espera_prim,sep=" "))
+print(paste("Desviacion estandar del tiempo de espera:", sd_tiempo_espera_prim,sep=" "))
+
+
+esp_tiempo_espera_ant=mean(espera_ant/2)
+var_tiempo_espera_ant=var(espera_ant/2)
+sd_tiempo_espera_ant=sqrt(var_tiempo_espera_ant)
+
+print(paste("Variables antitéticas"))
+print(paste("Esperanza del tiempo de espera:", esp_tiempo_espera_ant,sep=" "))
+print(paste("Varianza del tiempo de espera:", var_tiempo_espera_ant,sep=" "))
+print(paste("Desviacion estandar del tiempo de espera:", sd_tiempo_espera_ant,sep=" "))
+
+
+#Porcentaje de reducción de varianza
+p_red_var<-100*(var_tiempo_espera_prim - var_tiempo_espera_ant)/var_tiempo_espera_prim
+print(paste("Porcentaje de reducción de varianza:",p_red_var,"%", sep = " "))
+
+```
+
+\item[b)] Repetir el experimento cuando la duración del servicio es $U(0,2)$. ¿Porqué se alcanza una reducción de varianza mucho mejor aquí que en (a)?
+
+\textbf{solución:}
+
+```{r echo=FALSE}
+l_espera_prim2 <- function(numarrivals) {
+
+wait_time  <- 0          
+total_wait_time <- 0     
+total_idle_time <- 0     
+total_arrival_time <- 0  
+
+for (i in 1:numarrivals) {
+  service_time <- 2*runif(1)    
+  interarival_time <- 2*runif(1)  
+  total_arrival_time <- total_arrival_time + interarival_time
+  wait_time  <- wait_time - interarival_time + service_time
+
+  if (wait_time >= 0)
+    total_wait_time <- total_wait_time + wait_time
+  else {
+    total_idle_time <- total_idle_time - wait_time
+    wait_time  <- 0
+    }
+  }
+  
+result <- data.frame(Utilization=1-total_idle_time/total_arrival_time,
+		     TimeInQueue=total_wait_time/numarrivals,
+		     NumberInQueue=total_wait_time/total_arrival_time,
+		     TotalWaitTime=total_wait_time,
+		     TotalArrivalTime=total_arrival_time)
+}
+
+
+espera_prim2<-NULL
+for (i in 1:1000) {
+  sim_prim2<-l_espera_prim2(100)
+  espera_prim2[i]<-sim_prim2$TotalWaitTime
+}
+
+esp_tiempo_espera_prim2=mean(espera_prim2)
+var_tiempo_espera_prim2=var(espera_prim2)
+sd_tiempo_espera_prim2=sqrt(var_tiempo_espera_prim2)
+
+print(paste("Variables primarias"))
+print(paste("Esperanza del tiempo de espera:", esp_tiempo_espera_prim2,sep=" "))
+print(paste("Varianza del tiempo de espera:", var_tiempo_espera_prim2,sep=" "))
+print(paste("Desviacion estandar del tiempo de espera:", sd_tiempo_espera_prim2,sep=" "))
+
+
+
+```
+
+```{r, echo=FALSE}
+l_espera_ant2 <- function(numarrivals) {
+
+wait_time  <- 0          
+total_wait_time <- 0     
+total_idle_time <- 0     
+total_arrival_time <- 0  
+
+for (i in 1:numarrivals) {
+  service_time <- 2*runif(1)    
+  interarival_time <- 2-2*runif(1)  
+  total_arrival_time <- total_arrival_time + interarival_time
+  wait_time  <- wait_time - interarival_time + service_time
+
+  if (wait_time >= 0)
+    total_wait_time <- total_wait_time + wait_time
+  else {
+    total_idle_time <- total_idle_time - wait_time
+    wait_time  <- 0
+    }
+  }
+  
+result <- data.frame(Utilization=1-total_idle_time/total_arrival_time,
+		     TimeInQueue=total_wait_time/numarrivals,
+		     NumberInQueue=total_wait_time/total_arrival_time,
+		     TotalWaitTime=total_wait_time,
+		     TotalArrivalTime=total_arrival_time)
+}
+
+
+espera_ant2<-NULL
+for (i in 1:1000) {
+  sim_ant2<-l_espera_ant2(100)
+  espera_ant2[i]<-sim_ant2$TotalWaitTime
+}
+
+esp_tiempo_espera_ant2=mean(espera_ant2/2)
+var_tiempo_espera_ant2=var(espera_ant2/2)
+sd_tiempo_espera_ant2=sqrt(var_tiempo_espera_ant2)
+
+print(paste("Variables primarias"))
+print(paste("Esperanza del tiempo de espera:", esp_tiempo_espera_ant2,sep=" "))
+print(paste("Varianza del tiempo de espera:", var_tiempo_espera_ant2,sep=" "))
+print(paste("Desviacion estandar del tiempo de espera:", sd_tiempo_espera_ant2,sep=" "))
+
+```
+
+```{r}
+#Porcentaje de reducción de varianza
+p_red_var2<-100*(var_tiempo_espera_prim2 - var_tiempo_espera_ant2)/var_tiempo_espera_prim2
+print(paste("Porcentaje de reducción de varianza:",p_red_var2,"%", sep = " "))
+```
+
+\end{enumerate}
 
 \begin{flushright} 
 $\blacksquare$
@@ -33,12 +250,141 @@ Sea $L_j$ la variable que denota la posición del j-ésimo elemento seleccionado
 
 \begin{enumerate}
 \item[a)] Expliquen cómo utilizarían simulación para estimar $E[L]$.
+
+\textbf{Solución:}
+Primero simulamos un ensayo de las 100 permutaciones. Tomamos el vector inicial, lo permutamos con las respectivas probabilidades y seleccionamos $L_j$. Notemos que $L_j \in (1,2,3,4,5)$. Calculamos L y dividimos entre 100, esto es, $\widehat{\theta}=\widehat{E[L]}=\frac{\Sigma_{j=1}^{100}L_J}{100}$. Finalmente simulamos una cantidad considerable de $\widehat{\theta}$.
+
+```{r}
+selecciones <- c(1,2,3,4,5)
+aux <- c(1,2,3,4,5)
+sumatoria <- 0
+n <- 1000
+for (r in 1:n) {
+  L <- 0
+  for (i in 1:100) {
+    #print(paste("Iteracion", sep=" ", i))
+    #print("Vector")
+    #print(aux)
+    seleccion <- sample(selecciones,1,c(1/15,2/15,3/15,4/15,5/15),replace = TRUE)
+    #print(paste("seleccion", sep="=", seleccion))
+    l <- match(c(seleccion), aux)
+    #print(paste("l", sep="=", l))
+    vec <- c(seleccion)
+    for (j in aux) {
+      if(j != seleccion) {
+        vec <- c(vec, j)
+      }
+    }
+    aux <- vec
+    L <- L + l
+  }
+  sumatoria <- sumatoria + L
+}
+promedio <- sumatoria/n
+
+```
+
+
 \item[b)] Calculen $E[N_i]$ donde $N_i$ es el número de veces que el elemento $i$ es elegido en 100 selecciones.
+
+\textbf{Solución:}
+
+```{r}
+selecciones <- c(1,2,3,4,5)
+n <- 1000
+s1<-0
+s2<-0
+s3<-0
+s4<-0
+s5<-0
+
+for (t in 1:n) {
+muestra<-sample(selecciones,100,c(1/15,2/15,3/15,4/15,5/15),replace = TRUE)
+s1<-s1+length(subset(muestra,muestra==1))
+s2<-s2+length(subset(muestra,muestra==2))
+s3<-s3+length(subset(muestra,muestra==3))
+s4<-s4+length(subset(muestra,muestra==4))
+s5<-s5+length(subset(muestra,muestra==5))
+}
+
+print(paste("E[N1]=",s1/n,sep=" "))
+print(paste("E[N2]=",s2/n,sep=" "))
+print(paste("E[N3]=",s3/n,sep=" "))
+print(paste("E[N4]=",s4/n,sep=" "))
+print(paste("E[N5]=",s5/n,sep=" "))
+
+```
+
 \item[c)] Sea $Y=\Sigma_{i=1}^{5}iN_{i}$. ¿Cómo se correlaciona Y con L?.
-\item[d)] Desarrollen un estudio para estimar $L$ usando $Y$ como variable de control.
-\end{enumerate}
 
 \textbf{solución:}
+
+Notemos que:
+$$Corr(Y,L)=Corr(\Sigma_{i=1}^{5}iN_i,\Sigma_{j=1}^{100}Lj)=\Sigma_{i=1}^{5}\Sigma_{j=1}^{100}iCorr(N_i,L_j)$$.
+Como $N_i$ es el número de veces que se selecciona $i$, independiente de la posición. Sin embargo como 3,4,5 tienen mayor probabilidad de ser seleccionados, entonces tienen mayor probabilidad de estar en las primeras tres posiciones, entonces $L_j$ es más probable que se encuentre entre 1,2,3. Se puede pensar que tienen correlación negativa. 
+Otra forma de ver esto es considerar que $E[Y|X]=\Sigma_{i=1}{5}ip_i$. Entonces podemos estimar el número seleccionado promedio con $Y|X$. Como $Y$ es la suma promedio de los números seleccionados, mientras mayor sea la probabilidad de seleccionar un número grande, entonces éste tiene mayor probabilidad de ocupar las primeras posiciones. Esto es hacer L más chica.
+
+
+\item[d)] Desarrollen un estudio para estimar $L$ usando $Y$ como variable de control.
+
+\textbf{solución:}
+
+Sabemos que $$E[Y]=E[\Sigma_{i=1}^{5}iN_i=\Sigma_{i=1}^{5}iE[N_i]=\Sigma_{i=1}^{5}i(100p_i)\\=100[\frac{1}{15}+\frac{4}{15}+\frac{9}{15}+\frac{16}{15}+\frac{25}{15}]=\frac{5500}{15}$$.
+
+Generemos parejas de puntos (Y,L).
+
+```{r}
+prueba <- function(sigma0=1:5,n=100){ 
+  L <- I <- NULL 
+  permutaciones <- matrix(rep(0,500),nrow=100,5)
+  for(j in 1:n){
+    i <- sample(1:5,size=1,replace = F,prob =(1:5)/15)     I[j] <- i
+    L[j] <- match(i,sigma0) 
+    permutaciones[j,] <- c(i,sigma0[-match(i,sigma0)])     sigma0 <- permutaciones[j,] 
+    }
+  return(c(LT=sum(L),Y=sum(as.vector(table(I))*(1:5)))) } 
+datos <- NULL 
+for(i in 1:200){
+  datos <- rbind(datos,simula4())}
+plot(datos)
+
+```
+
+
+Ya conocemos $E[Y]$. Podemos definir la variable de control $$L_c=L-a(Y-\frac{5500}{15})$$.
+
+```{r}
+summary(lm(LT~Y,data=as.data.frame(datos)))
+```
+
+```{r}
+betahat <- coefficients(lm(LT~Y,data=as.data.frame(datos)))[2]
+datos <- NULL
+for(i in 1:1000) {datos <- rbind(datos,prueba())}
+```
+
+```{r}
+datos <- as.data.frame(datos)
+theta <- mean(datos$LT)
+tildetheta <-mean(datos$LT-betahat*(datos$Y-366.67)) c(theta,tildetheta) 
+```
+
+Calculamos un intervalo de confianza para theta.
+
+```{r}
+theta +c(-1,1)*qnorm(.975)*sd(datos$LT)/sqrt(1000)
+```
+
+Finalmente un intervalo de confianza para el estimador de theta.
+
+```{r}
+tildetheta + c(-1,1)*qnorm(.975)*sd(datos$LT - betahat*(datos$Y-366.67))/sqrt(1000)
+
+```
+
+
+\end{enumerate}
+
 
 \begin{flushright} 
 $\blacksquare$
@@ -50,6 +396,10 @@ Sean $X$ y $Y$ dos independientes exponenciales con medias 1 y 2 respectivamente
 
 \textbf{solución:}
 
+Podemos expresar $\theta=P(X+Y>4)=E(I(X+Y>4))$ como un valor esperado. Podemos utilizar el teorema de probabilidad total para encontrar la versión condicionada.
+$$E(I(X+Y>4))=E(E(I(X+Y>4|Y)))=\int_{0}^{\infty}P(X+y>4|y)f_{y}(y)dy\\=\int_{0}{4}P(X>4-y|y)d_{y}(y)dy\\=\int_{0}{4}P(X>4-y)d_{y}(y)dy\\=E_{Y}[I(0<y<4)(1-F_{X}(4-y))]\\=E_{Y}[I(0<y<4)(e^{-(4-y)}]$$.
+Entonces se puede estimar $\hat{I}=\frac{\Sigma_{i=1}^{n}I(0<y<4)(e^{-(4-y))}}{n}$. Se muestrea una n exponencia con media 2. Por simetría, lo mismo se realiza para la otra condición. Nos conviene condicionar en aquella que tenga menor varianza condicional, debido a que la varianza de este estimador depende de la media condicional.
+
 \begin{flushright} 
 $\blacksquare$
 \end{flushright} 
@@ -60,6 +410,33 @@ Supongan que queremos estimar $\theta=\int_{0}^{1}e^{2}dx$. Muestren que generar
 
 \textbf{solución:}
 
+```{r}
+#Generando un número aleatorio y usando el estimador
+n<-10000
+u<-runif(n)
+h<-function(x){exp(x^2)*(1+exp(1-2*x))/2}
+var1<-var(h(u))
+
+print(paste("Estimación método 1:", mean(h(u)),sep = " "))
+print(paste("Varianza método 1:",var1,sep = " "))
+
+#Generando dos números aleatorios
+
+u1<-runif(n)
+u2<-runif(n)
+g<-function(x,y){(exp(x^2)+exp(y^2))/2}
+mean(g(u1,u2))
+var2<-var(g(u1,u2))
+var2
+
+print(paste("Estimación método 2:", mean(g(u1,u2)),sep = " "))
+print(paste("Varianza método 2:",var2,sep = " "))
+
+print(paste("El método 1 mejora la varianza en un ", 100*(var2-var1)/var2,"%",sep = " "))
+
+```
+ 
+
 \begin{flushright} 
 $\blacksquare$
 \end{flushright} 
@@ -69,11 +446,17 @@ $\blacksquare$
 Explicar cómo se pueden usar variables antitéticas en la simulación de la integral
 
 $$\theta=\int_0^1\int_0^1e^{(x+y)^2}\mbox{ d}x\mbox{ d}y$$
+\textbf{solución:}
+
+$\theta=E[e^{(X+Y)^2}]$, $f=e^{(X+Y)^2}$. Generamos $X_1,....X_\frac{n}{2} \sim f$ usando $u$. Generamos $Y_1,....Y_\frac{n}{2} \sim f$ usando $1-u$. Definimos $Z_i=\frac{X_i+Y_i}{2}$. Entonces $\hat{\theta^{*}}=\bar{Z}$.
 
 ¿Es claro en este caso que usando variables antitéticas es más eficiente que generando
 nuevos pares de variables aleatorias? Dar una justificación a su respuesta.
 
 \textbf{Solución:}
+Sí, ya que la simulación de un error para un parámetro $\theta \approx \bar{X}$ depende de $Var(\bar{X})$. Por lo que si se reduce con variables antitéticas $Var(X)$, entonces la simulación es mucho más eficiente.
+
+
 
 \begin{flushright}
 $\blacksquare$
@@ -141,14 +524,42 @@ $$h(U)=H(a_{1}U_{1},...,a_{5}U_{5}).$$
 
 \begin{enumerate}
 \item[a)]Obtener un estimador crudo de MonteCarlo para $l$.
+```{r}
+a <- c(1,2,3,1,2)
+H <- function(x)min(x[1]+x[4],x[1]+x[3]+x[5],x[2]+x[3]+x[4],x[2]+x[5])
+h <- function(x)H(a*x)
+E <- NULL
+n <- 10000
+for(i in 1:n){
+  E[i]<-h(runif(5))} 
+c(mean(E),sd(E)/sqrt(n))
+```
+
+
 \item[b)] Obtener un estimador usando variables antiréticas. 
 \item[c)] Obtener un estimador usando variables de control.
+
+Si definimos $Y=min(X_1+X_4,X_2+X_5)$, entonces forzamos a constuir una alta probabilidad de que la ruta más corta sea igual a Y. $E[Y]=\frac{15}{16}$.
+```{r}
+Hc <- function(x)min(x[1]+x[4],x[2]+x[5])
+hc <- function(x)Hc(a*x)
+u <- matrix(runif(n*5),nrow=n,ncol=5)
+Y <- apply(u,1,h)
+Yc <- apply(u,1,hc)
+a <- cor(Y,Yc)
+E <- mean(Y-a*(Yc-15/16)) c(E,sd(Y-a*(Yc-15/16))/sqrt(n))
+
+```
+
+
 \item[d)] Obtener un estimador usando condicionamiento.
+
+Tenemos que definir $Z_1=min(X_4,X_3+X_5)$,$Z_2=min(X_5,X_3+X_4)$. Entonces $Y_1=X_1+Z_1$, $Y_2=X_2+Z_2$, $Y=H(X)$. Escribimos $Y=min(Y_1,Y_2)$ donde condicionando a $(Z_1,Z_2)$,$(Y_1,Y_2)$ se distribuye uniforme en el rectángulo $[z_1,z_1+1]x[z_2,z_2+2]$.Luego $E[Y|(Z_1,Z_2)]$ se puede evaluar.
 \end{enumerate}
 
 En todos los casos anteriores, calcular la reducción de varianza obtenida y determinar el mejor método.
 
-\textbf{Solución:}
+
 
 \begin{flushright}
 $\blacksquare$
