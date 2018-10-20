@@ -1,0 +1,98 @@
+---
+title: "Reducción de Varianza"
+author: "Jorge de la Vega"
+date: "9 de octubre de 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 2. Técnicas de Reducción de varianza (Parte 1)
+
+1. Variables antitéticas: aplica variables antitéticas a la integral del problema 1 y calculen el porcentaje de reducción de varianza si es que hay.
+
+2. Variables de control: estimar $\theta=E(e^(U+W)^2)$ con $U,W$ iid $\mathcal{U}(0,1)$, 
+
+3. Condicionamiento: Un proyecto de construcción tiene una duración $X|(\mu,\sigma^2) \sim \mathcal{N}(\mu,\sigma^2)$ donde $\mu \sim \mathcal{N}(100,16)$ y $\sigma^2\sim exp(1/4)$, con $\mu \perp  \sigma^2$. La compañía que construye debe pagar 1000 USD por cada día (y prorata por partes de día) que la duración del proyecto excede $K$ días.    ¿Cuál es el costo esperado del retraso?
+
+    - Calcular usando MC usual y usando condicionamiento.
+
+# 2. Técnicas de Reducción de varianza (Parte 2)
+4. Usando variables de control, calcular $\theta=E(e^U)=\int_0^1e^u\,du$, con $U\sim U(0,1)$
+
+  - Solución: Para efectos de revisar la técnica, haciendo la integral simple se obtiene
+$\int_0^1e^u\,du=e^u|_0^1 = 1-e=1.718282$. Calculando el estimador crudo de Monte Carlo con $n$ replicaciones se puede calcular su varianza de manera explícita: $Var(e^U)/n$ donde
+  $$Var(e^U) = E(e^{2U})-E(e^U)^2 =\frac{e^2-1}{2}-(e-1)^2 \approx 0.2420351$$ 
+  
+  Podemos tomar como variable de control, por ejemplo a $U$, que sabemos está correlacionada con $e^U$ y además $E(U)=0.5$, $Var(U)=1/12$ y $Cov(e^U,U)=E(Ue^U) - \theta/2 = 1-(e-1)/2 \approx 0.1408591$.
+  
+  Entonces el valor óptimo de $c$ es 
+  \[c^*=\frac{-Cov(e^U,U)}{Var(U)}= 12 + 6(e-1) \approx 1.690309\]
+
+  El estimador de control es $\hat{\theta}_{c^*} = e^U-1.690309(U-0.5)$
+ 
+  Finalmente, para $n$ réplicas del estimador, se tiene que $nVar(\hat{\theta}_{c^*}) = Var(e^U)- \frac{-Cov(e^U,U)}{Var(U)} \approx 0.003940175$
+
+  El porcentaje de reducción de varianza es:
+
+```{r}
+100*(0.2429351-0.003940175)/0.242931
+```
+
+Haciendo las simulaciones respectivas, se obtiene:
+
+```{r}
+n <- 10000  #tamaño de muestra
+# MC crudo
+u <- runif(n)
+T1 <- exp(u)
+mean(T1)
+
+# Por variable de control
+c <- 12 - 6*(exp(1)-1)
+T2 <- exp(u) - c*(u-0.5)
+mean(T2)
+
+# Reducción de varianza
+100*(var(T1) - var(T2))/ var(T1)
+```
+
+5. Usen variabes de control para estimar $\int_0^1\frac{e^{-x}}{1+x^2}\, dx$
+
+  -Solución: sea $g(u)=e^{-u}/(1+u^2)$ con $u\sim U(0,1)$. Buscamos una función $f(u)$ que esté correlacionada con $g(u)$ y con valor esperado conocido.
+  
+   Una posible función es fijar el numerador o denominador de tal manera que resulte fácil encontrar su esperanza. Por ejemplo $f_1(u) =\frac{1}{1+u^2}$, $f_2=e^{-x}/2$, etc. Yo hago $f_1$ y ustedes $f_2$. Por ejemplo para $f_1$ se tiene $E(f_1(u)) = \int_0^1 \frac{du}{1+u^2} = arctan(1) = \pi/4$.
+   
+   Podemos estimar $c^*$ haciendo un piloto:
+```{r}
+#Piloto para determinar c*
+f1 <- function(u) 1/(1+u^2)
+g <- function(u) exp(-u)/(1+u^2)
+u <- runif(10000)
+c <- cov(f1(u),g(u))/var(g(u))
+c
+# Por MC crudo
+T1 <- g(u)
+mean(T1)
+var(T1)
+# Estimamos la variable de control
+T2 <- T1 - c*(f1(u) - pi/4)
+mean(T2)
+var(T2)
+
+# Reducción de varianza
+100*(var(T1)-var(T2))/var(T1)
+```
+
+Podemos estimar la constante haciendo un ajuste de regresión:
+
+```{r}
+c2 <- - lm(g(u) ~ f1(u))$coef[1]
+c2
+```
+
+
