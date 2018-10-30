@@ -1,0 +1,183 @@
+---
+title: "Ejemplo MCMC"
+author: "Jorge de la Vega"
+date: "29 de octubre de 2018"
+output:
+  html_document: default
+  word_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+```
+
+## Ejemplo: Aplicación de MCMC a la Criptografía
+
+El siguiente ejemplo se basa en el artículo de Persi Diaconis: ["The Markov chain Monte Carlo revolution"](https://math.uchicago.edu/~shmuel/Network-course-readings/MCMCRev.pdf) *Bulletin of the American Mathematical Society*, 46(2):179-205, 2009. 
+
+### Definición del modelo
+
+Sea $A$ un conjunto que representa un alfabeto con $n$ letras. Por ejemplo, en el inglés se consideran $n=26$ letras mÃ¡s el espacio son 27. Ahora consideremos un mensaje $M_k$ que consta de k letras en $A$. En el espaÃ±ol podrían ser 28 o 29.
+
+
+Sea $\sigma: A \to A$ una _permutación_ o _función de codificación_.  Hay $n!$ permutaciones. Para el inglés como se definió arriba hay $27!\approx 10^{28}$ posibles funciones de codificación.
+
+\[ \sigma(c_1,c_2,\ldots,c_n) = (c_{\sigma(1)},c_{\sigma(2)},\ldots,c_{\sigma(n)}).\]
+
+Sea $M_k$ un _mensaje_ conformado por $k$ letras en $A$. El problema a resolver es el siguiente: <font color="blue">si $M_k$ es un mensaje cifrado, encontrar la función $\sigma^*$ que decodifica el mensaje para hacerlo legible</font>.
+
+- Para descifrar el mensaje, se necesita medir de alguna manera la "distancia" entre el mensaje cifrado y el mensaje real. El real no es conocido, por lo que se requiere una medición indirecta. Esta medición puede basarse en la verosimilitud de que ciertas letras aparezcan de manera conjunta. Para estimar esta verosimilitud, se puede usar una muestra del lenguaje común, que típicamente se conoce como _corpus_.
+
+- Dado un corpus asociado al alfabeto $A$, podemos construir una función _score_ (como una especie de 'distancia') de la siguiente manera: sea $O$ la matriz de $(n+1)\times (n+1)$ que registra la frecuencia de transiciones de una letra a otra en el corpus, formando pares de letras. Por ejemplo, si el corpus es: 'abracadabra', entonces $O_{ab}=O_{br}=O_{ra}=2$, $O_{ac}=O_{ca}=1$, etc.
+
+A la función $\sigma$ le podemos asignar el score:
+
+\[ score(\sigma) = \prod_{i=1}^k O_{\sigma(c_i),\sigma(c_{i+1})} \]
+
+- La función score para el mensaje $M_k$ lo definimos como el producto sobre todas las frecuencias de los pares sucesivos de letras $(\sigma(c_i),\sigma(c_{i+1}))$ en el texto descifrado con la $\sigma$ particular.
+
+- Este score es mayor cuando frecuencias de pares sucesivos en el mensaje corresponden con aquellos que aparecen mÃ¡s frecuentemente  en el texto de referencia. Entonces, *codificaciones con altos scores son las candidatas para descodificar*. El objetivo es encontrar la $\sigma^*$ con score mÃ¡ximo.
+
+A continuación, se considera un corpus basado en la obra completa de Jane Austen que se encuentra disponible en el Proyecto Gutenberg y de la que se calcula la matriz de transiciones $O$. 
+
+```{r}
+set.seed(1010) #fija una semilla para reproducir el ejercicio.
+
+# https://piazza.com/class_profile/get_resource/jkr974no7yz4gb/jnlnpa3pp731y0
+
+# La siguiente matriz estÃ¡ basada en la obra de Jean Austen y cuenta las transiciones 
+# encontradas entre letras consecutivas (idioma inglés)
+mat <- read.table("AustenCount.txt", header=F)
+row.names(mat) <- colnames(mat) <- c(letters,"space")
+dim(mat)
+mat[1:3,1:3] #transiciones de a->a, a->b a->c, b->a, y así sucesivamente
+logmat <- log(mat + 1) #transforma a logaritmos para facilitar operaciones.
+```
+
+Podemos definir una distribución de probabilidad que sea proporcional al score sobre el espacio de permutaciones, y el problema de Montecarlo consiste en muestrear de esta distribución: 
+
+\[\pi_{\sigma} = \frac{eval(\sigma)}{\sum_{\psi\in \mathcal{C}}eval(\psi)}\]
+
+Noten que el denominador de esta densidad no se puede calcular, pues es la suma de $n!$ componentes. Pero para aplicar el algoritmo de Metropolis-Hastings sólo basta conocer los cocientes de la forma $\pi_{\sigma}/\pi_{\psi} = score(\sigma)/score(\psi)$.
+
+```{r}
+score <- function(permutacion){
+  # calcula score del mensaje codificado con permutacion dada.
+	p <- 0
+	# Para cada par de letras en el mensaje decodificado
+	# busca la matriz de transición para la probabilidad de ese par
+	for (i in 1:(nchar(mensaje)-1)){
+		p <- p + logmat[charIndex(substr(permutacion, i, i)),charIndex(substr(permutacion, i+1, i+1))]
+	}
+	# regresa la suma de estas probabilidades
+	return(p)
+}
+```
+
+### Elección del kernel de transición
+
+Podemos ejecutar una caminata aleatoria en el conjunto de permutaciones de la siguiente manera: 
+
+Dada una permutación $\sigma$, la transición a una permutación propuesta $\sigma^*$ se da tomando dos letras al azar y cambiando los valores que $\sigma$ asigna a esas letras. Con este método de transposiciones aleatorias, se contruye un kernel de transición simétrico, obteniendo como cociente de Hastings la siguiente expresión:
+
+\[ \alpha(\sigma,\sigma^*)= \frac{\pi_{\sigma^*}    q(\sigma^*|\sigma)}{\pi_{\sigma}q(\sigma|\sigma^*)} = \frac{score(\sigma^*)}{score(\sigma)} \]
+
+### Algoritmo
+
+Para hacer las búsquedas de los pares en la matriz $O$ se indexan a través de sus códigos ASCII, para lo que se usan dos funciones: `ascii` y `charIndex`.
+
+```{r}
+ascii <- function(char){ 
+  # ascii(char) devuelve el numeral ascii de un caracter
+	strtoi(charToRaw(char),16L) #obtiene  valor ascii crudo
+} 
+
+charIndex <- function(char){
+  # esta función toma un caracter y regresa su 'char value'
+  # definido como a=1, b=2, ..., z=26, space=27 en la matriz
+  # esto es para que corresponda a la posición en la matriz diccionario
+	aValue <- ascii(char)
+	if (aValue == 32) {
+		27 #regresa 27 si es un espacio
+	} else {
+		aValue - 96 #ascii define "a" como 97, así que reescalamos restando 96
+	}
+}
+```
+
+Las evaluaciones ya hechas se van guardando en una lista de `environments` para no tener que recalcularlas cada vez. 
+
+### Ejemplo
+
+Consideremos el siguiente mensaje. Para simplificar, se han eliminado los signos de puntuación y la diferencia entre minúsculas y mayúsculas:
+
+**coincidences in general are great stumbling blocks in the way of that class of thinkers who have been educated to know nothing of the theory of probabilities that theory to which the most glorious objects of human research are indebted for the most glorious of illustrations edgar allen poe the murders in the rue morgue morpheus this is your last chance after this there is no turning back you take the blue pill the story ends you wake up in your bed and believe whatever you want to believe you take the red pill you stay in wonderland and i show you how deep the rabbit hole goes**
+
+
+```{r}
+#Este es el mensaje codificado. Hay que descodificarlo
+mensaje <- "coincidences in general are great stumbling blocks in the way of that class of thinkers who have been educated to know nothing of the theory of probabilities that theory to which the most glorious objects of human research are indebted for the most glorious of illustrations edgar allen poe the murders in the rue morgue morpheus this is your last chance after this there is no turning back you take the blue pill the story ends you wake up in your bed and believe whatever you want to believe you take the red pill you stay in wonderland and i show you how deep the rabbit hole goes"
+
+decrypt <- function(perm,fa){  	
+  # Desencripta código de acuerdo al score actual fa
+	out <- perm
+	# para cada caracter en el mensaje, decodifica de acuerdo al score actual fa
+	for (i in 1:nchar(mensaje)) {
+		charInd <- charIndex(substr(perm,i,i))
+		if (charInd < 27)	{
+			# cambia el i-ésimo caracter al determinado por fa
+			substr(out,i,i) <- rawToChar(as.raw(fa[charInd] + 96))
+		}
+	}
+	return(out)
+}
+
+codemess <- decrypt(mensaje,sample(1:26)) # codemess tiene el mensaje encriptado, con alguna permutación
+codemess
+
+```
+
+Entonces la simulación queda del siguiente modo:
+```{r}
+# crea un ambiente ara guardar los scores calculados previamente
+map <- new.env(hash = T, parent = emptyenv())
+
+# Comenzamos con la función identidad  (a->a, z->z) para desencriptar el mensaje codificado
+fa <- 1:27
+# calcula el score para fa y guardalo en el mapa
+oldEval <- score(decrypt(codemess, fa))
+map[[paste(fa, collapse='')]] <- oldEval
+
+# ejecuta N iteraciones del algoritmo de MH
+for (iteration in 1:2500) {
+	# muestrea dos letras para permutar
+	swaps <- sample(1:26,2)
+	oldFunc <- fa
+	
+	# fa es oldFunc pero con dos letras permutadas
+	fa[swaps[1]] <- oldFunc[swaps[2]]
+	fa[swaps[2]] <- oldFunc[swaps[1]]
+	
+	# si ya se tiene esta decodificación evaluada, traemos el score del mapa
+	if (exists(paste(fa, collapse =''), map)) {
+		newScore <- map[[paste(fa, collapse ='')]]
+	} else {
+	# si no la tenemos en el mapa, calculamos el score y lo guardamos en el mapa
+		newEval <- score(decrypt(codemess,fa))
+		map[[paste(fa, collapse = '')]] <- newEval
+	}
+	
+	# decidimos si se acepta la fa o nos regresamos a la oldFunc
+	if (runif(1) > exp(newEval-oldEval)) {fa <- oldFunc } else {oldEval <- newEval}
+	
+	# imprime el mensaje descifrado cada 100 iteraciones
+	if ((iteration %%  100) == 0) { print(c(iteration,decrypt(codemess,fa))) }
+}
+```
+
+
+
+
+
