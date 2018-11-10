@@ -1,0 +1,99 @@
+---
+title: "Ejemplos para motivar MCMC"
+author: "Jorge de la Vega"
+date: "22 de octubre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ejemplos para motivar MCMC
+
+## Ejemplo 1: Sucesiones binarias sin 1's adyacentes
+
+En este ejemplo se tienen sucesiones de longitud $m$ de lanzamientos de monedas. Sol es 1 y Águila es 0. Decimos que una sucesión es _buena_ si no hay 1's adyacentes. Por ejemplo, para $m=4$, algunas sucesiones buenas son las siguientes:
+
+0000, 0001, 0101, 1001, 1010, ...
+
+Sucesiones no buenas son como:
+
+1100, 1011, 0110, 1110,...s
+
+El problema consiste en determinar el número esperado de 1's en sucesiones buenas, $\mu = E(X_m) = \sum_kkP(X_m=k)$, donde $X=$número de 1's en la sucesión buena  $X_m$ de longitud $m$.
+
+Se puede calcular exactamente $P(X_m = k)$. Consideremos una secuencia de longitud $m$. De estas debe haber $k$ unos y $m-k$ ceros. Este cálculo lo hicimos antes cuando calculamos la distribución de las rachas. Por ejemplo, si $m=5$ y $k=2$, entonces el problema es equivalente a colocar $m-k=3$ bolas indistinguibles (los ceros) en $k+1=3$ urnas que cuyas paredes son los 1's (excepto en los extremos), sin que queden urnas vacías, eg: 01010 . Este número es ${ {m-k-1}\choose k}$. Pero hay que considerar dos casos adicionales, ya que en esta situación sí podemos tener unos en los extremos, así que tenemos que sumar 2 casos mas, y por lo tanto $m-k-1+2=m-k+1$, así que $P(X_m=k)= \frac{{m-k+1 \choose k}}{2^{m-1}}$. Sin embargo, no tenemos una fórmula cerrada para $\mu=E(X_m)$.
+
+Para $m=4$ por ejemplo, hay $2^4=16$ sucesiones diferentes de 0's y 1's. Estas son:
+
+0000, 0001, 0011, 0111, 1111, 0010, 0110, 1110, 0100, 1100, 1000, 1010, 0101, 1001, 1011, 0111.
+
+De estas hay $2^3 = 8$ buenas:
+
+0000, 0001, 0010, 0100, 1000, 1010, 0101, 1001.
+
+El valor esperado es entonces $\frac{1}{8}(0+1+1+1+1+2+2+2)=10/8=1.25$.
+
+1. ¿Cuánto vale $\mu$ para $m = 10, 100, 1000? ¿Cómo calcularías estos números por simulación?
+
+```{r}
+m <- 10 # logitud de las sucesiones que se van a simular
+N <- 1000 # Numero de simulaciones
+x <- matrix(numeric(), nrow=N,ncol=m)
+# Generar las sucesiones
+for (i in 1:N) {
+  x[i,] <- sample(0:1,m,replace = T)
+}
+# Obtener los renglones que son sucesiones validas
+ind <- apply(x,1,function(x)ifelse(sum(which(diff(which(x==1))==1))==0,1,0))
+# Obtener solo las sucesiones validas
+y <- x[ind, ]
+# Obtener promedio de numero de 1's en las sucesiones validas
+mu <- apply(y, 1, sum)/N
+```
+
+2.  Consideren la siguiente alternativa: construir una cadena de Markov $X_0, X_1, ...$ cuyo espacio de estados sea el de las buenas sucesiones (no todas, sólo las buenas), cuya distribución estacionaria es la uniforme en el conjunto de las muestras buenas. Sobre la cadena calculamos $\mu \approx \frac{r(X_1) + r(X_2) + \cdots + r(X_n)}{n}$. 
+
+La CM se construye de la siguiente manera: 
+
+  - Selecciona uno de sus $m$ componentes al azar, digamos $c$.
+  - Aplica la transformación siguiente para generar una nueva buena sucesión $Y$: 
+  \[ T(c)= \begin{cases} 1 & c=0 \\ 0 & c=1 \mbox{ y el resultado es buena sucesión} \end{cases} \]
+  - Mueve a la nueva sucesión si es buena o quedarse en la actual si no es buena:
+   \[ X_{n+1} = \begin{cases} X_n & \mbox{ si la secuencia no es buena } \\ Y & \mbox{ si la secuencia es buena} \end{cases} \]
+
+Escribir un programa para simular esta cadena para $m=10,100,1000$. 
+
+```{r}
+# init es la sucesion inicial
+# N numero de iteraciones de la cadena
+# Construir una CM que visita las sucesiones buenas y genera x1,...,xN
+adyacente <- function(init, N) {
+  m <- length(init)
+  nunos <- 0 # no. total de unos
+  nueva <- c(2,init,2) # identificamos las sucesiones donde inicia y termina con 2
+  for (i in 1:N) {
+    indice <- sample(1:m,1) + 1 # se suma uno para recorrer el indice
+    flip <- !nueva[indice] # cambia el digito en el indice selecionado
+    if (flip==0) {
+      nueva[indice] <- 0
+      nunos <- nunos + sum(nueva)
+      next
+    } else {
+      if (nueva[indice-1]==1|nueva[indice+1]==1) {
+        nunos <- nunos + sum(nueva)
+        next
+      } else {
+        nueva[indice] <- 1
+        nunos <- nunos + sum(nueva)
+      }
+    }
+  }
+  return(nunos/N-4)
+}
+adyacente(rep(0,100),100000)
+```
+
+
+3. ¿Cuál de los dos procedimientos anteriores es mejor? ¿Porqué?
