@@ -1,7 +1,7 @@
 ---
-title: "Trabajo final de Cálculo Actuarial III"
-author: "Bernardo Mondragón Brozon, Anhara Gámez Rueda"
-date: "May 12, 2018"
+title: "Proceso de reclamaciones en una aseguradora: Estimaciones y simulaciones de la Severidad total"
+author: "Bernardo Mondragón Brozon, Karen Delgado Curiel, Diego Gonzalez Garcia-Santoyo"
+date: "Diciembre 10, 2018"
 output:
   pdf_document: default
   html_document:
@@ -41,21 +41,37 @@ azulito <- "#00e6e6"
 
 \section{El modelo colectivo}
 
+El negocio de seguros está sujeto a dos tipos esencialmente diferentes de riesgo, riesgos comerciales y riesgos de seguro. Hay dos puntos de vista desde los cuales se puede considerar la teoría del riesgo, la colectiva y la individual o clásica.
+
+En la teoría del riesgo colectivo, se busca investigar directamente la empresa en su conjunto. El interés primario se centra no en las ganancias, pérdidas o reclamaciones de pólizas individuales, sino en el monto de las reclamaciones totales o la ganancia total que surja de todas las pólizas en la cartera considerada.
+
+La teoría del riesgo colectivo considera dos problemas principales: encontrar las funciones de distribución de la ganancia total o el monto total de las reclamaciones en una cartera o empresa de riesgo, y encontrar la probabilidad de que la reserva de riesgo de una empresa se agote.
+
+En este trabajo se ilustran los métodos que sigue una compañía aseguradora para obtener la distribución de la severidad total a la que está expuesta a lo largo de un año. Primero, se supondrá una distribución para la frecuencia con la que llegan las reclamaciones y una distribución para cada monto reclamado. De esta manera se pondrán obtener las probabilidades teóricas con las que la compañía estará egresando cantidades anualmente. Después, mediante técnicas de muestreo, se realizarán simulaciones de estas cantidades para obtener distribuciones empíricas a las cuales se les realizarán pruebas de bondad de ajuste para comprobar que efectivamente los datos observados provienen de la distribución propuesta al principio.
+
+En la práctica, los actuarios no proponen una distribución para la frecuencia y la severidad, sino que ocupan la información de las bases de datos y realizan pruebas para determinar la distribución de los datos que se están observando. Una vez determinada las distribuciones, realizan las simulaciones bajo diferentes escenarios para analizar el impacto que tienen estos eventos en la situación financiera de la compañía. Cuando no se cuentan con bases de datos, entonces se procede suponiendo distribuciones y ajustándolas bayesianamente conforme se observan más datos. Posteriormente, para calcular probabilidades sobre estas distribuciones se realizan las simulaciones. En este trabajo no se realizará ningun analisis bayesiano sobre las distribuciones.
+
 \subsection{1.1 La severidad total}
 
-La severidad total esta dada por lo siguiente:
+En el proceso de reclamaciones de una aseguradora, la severidad total, que es la cantidad total de dinero que la aseguradora terminará pagando en el periodo de estudio, esta dada por la siguiente cantidad:
+
 $$ S=x_1+x_2+\cdots+x_N  $$
+
 ```{r, parameters, include=FALSE}
 set.seed(7031996)
 lambda_po <- 0.1
 denom <- 10000 # Por la parametrizacion de la exponencial
 lambda_exp <- 1/denom
 ```
-En donde $\{x_i\}_{i=1\dots N}$ son variables aleatorias independientes e identicamente distribuidas que indican los montos tal que $x_i$ sigue una distribución exponencial con media $1/\lambda_{exp}=`r denom`$ para toda $i$, y $N$ es la variable aleatoria independiente de las $x_i$'s que indica la frecuencia de los montos tal que sigue una distribución Poisson con media $\lambda_{Po}=`r lambda_po`$ eventos en un año.
+
+En donde los riesgos $\{x_i\}_{i=1\dots N}$ son variables aleatorias independientes e idénticamente distribuidas que indican los montos de las reclamaciones. Se puede suponer que $x_i$ sigue una distribución exponencial con media $1/\lambda_{exp}=`r denom`$ para toda $i$. Como la llegada de una reclamación a la aseguradora por parte de un asegurado es un suceso extraño, podemos suponer que el proceso de llegada de reclamaciones a la aseguradora es un proceso de Poisson, en donde el número $N$ de reclamaciones que llegan a la aseguradora dentro de un año es variable aleatoria que tiene una distribución Poisson con media $\lambda_{Po}=`r lambda_po`$ independiente de las $x_i$'s, de manera que a lo largo del año se observará en promedio $`r lambda_po`$ reclamaciones.
 
 Por el teorema de probabilidad total, se tiene que 
+
 $$Pr\{S\leq s|N=n\}=\frac{Pr\{S\leq s,N=n\}}{Pr\{N=n\}}  $$
+
 $$\Rightarrow \quad Pr\{S\leq s,N=n\}=Pr\{N=n\}Pr\{S\leq s|N=n\}.$$
+
 Por lo tanto se tiene que 
 $$\begin{aligned}
   F_S(s) &= \sum_{n=0}^{\infty}Pr\{S\leq s,N=n\}  \\
@@ -64,13 +80,15 @@ $$\begin{aligned}
             &= \sum_{n=0}^{\infty}Pr\{N=n\}F_X^{*n}(s).
 \end{aligned}$$
 
-En donde $F_X^{*n}(s)$ es la convolución de las variables aleatorias $\{x_i\}_{i=1\dots N}$, o bien, la funcion de distribucion de probabilidad acumulada de $\sum_{i=n}^{N}x_i$ con $x_i \sim exp(\lambda_{exp}=1/`r  denom`)$. 
-Sean $M_{\sum_{i=n}^{N}x_i}(t)$ y $M_{x_1}(t)$ las funciones generadoras de momentos de las variables aleatorias $\sum_{i=n}^{N}x_i$ y $x_1$ respectivamente, entonces, sin pÃ©rdida de generalidad, se tiene que
+En donde $F_X^{*n}(s)$ es la convolución de las variables aleatorias $\{x_i\}_{i=1\dots N}$, o bien, la función de distribución de probabilidad acumulada de $\sum_{i=n}^{N}x_i$ con $x_i \sim exp(\lambda_{exp}=1/`r  denom`)$. 
+Sean $M_{\sum_{i=n}^{N}x_i}(t)$ y $M_{x_1}(t)$ las funciones generadoras de momentos de las variables aleatorias $\sum_{i=n}^{N}x_i$ y $x_1$ respectivamente, entonces, sin pérdida de generalidad, se tiene que
 
 $$M_{\sum_{i=n}^{N}x_i}(t)=\prod_{i=1}^n M_{x_1}(t)=\prod_{i=1}^n\frac{\lambda_{exp}}{\lambda_{exp}+t}=\left(\frac{\lambda_{exp}}{\lambda_{exp}+t}\right)^n=\left(1-\frac{t}{\lambda_{exp}}\right)^{-n}.$$
 
-Lo cual corresponde a la funcion generadora de momentos de una variable aleatoria distribuida Gamma con parametros de $\alpha = n$ y $\beta = \lambda_{exp}$. Ademas, la distribucion de la frecuencia es Poisson con parametros $\lambda_{Po}=`r lambda_po`$, entonces se sigue que
+Lo cual corresponde a la funcion generadora de momentos de una variable aleatoria distribuida Gamma con parámetros de $\alpha = n$ y $\beta = \lambda_{exp}$. Ademas, la distribución de la frecuencia es Poisson con parametros $\lambda_{Po}=`r lambda_po`$, entonces se sigue que
+
 $$F_S(s)=\sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t $$
+
 ```{r plot S CDF, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 # CDF Compound Poisson Distribution 
 cdf.comp.pois <- function(x, lambda_po=4,lambda_exp=2) {
@@ -138,6 +156,7 @@ p + xAxis + yAxis + cdf.comp.pois.labels + cdf.comp.pois.title + title.theme + a
 ```
 
 La funcion de densidad de probabilidad de la severidad total esta dada por
+
 $$\begin{aligned}
   f_S(s) &= \frac{d}{ds}F_S(s)  \\
             &= \frac{d}{ds}\sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t \\
@@ -243,7 +262,8 @@ breaks <- seq(1, 80000, by=1000)
 hist.p <- ggplot(data=severities.df, aes(x=severities)) +
   geom_histogram(breaks=breaks, color=hist.color, fill=hist.fill, alpha=hist.alpha) + 
   labs(x = TeX('Severidad total$'), y = TeX('Frecuencia')) +
-  ggtitle("Histograma") + title.theme
+  ggtitle("Histograma") + title.theme + geom_vline(xintercept = mean(severities), linetype="dotted", 
+                color = "cyan", size=1.5)
 hist.p
 ```
 
@@ -271,8 +291,8 @@ $$\begin{aligned}
 y su varianza está dada por
 $$\begin{aligned}
   Var(S) &= Var(E(S|N)) + E(Var(S|N)) = Var(NE(x_1))+E(NVar(x_1)) \\
-            &=\frac{1}{\lambda_{exp}}Var(N) + \frac{1}{\lambda_{exp}^2}E(N) = \frac{\lambda_{Po}}{\lambda_{exp}} + \frac{\lambda_{Po}}{\lambda_{exp}^2}=(10000)(0.1) + (10000)^2(0.1)=10001000
-\end{aligned},$$
+            &=\frac{1}{\lambda_{exp}}Var(N) + \frac{1}{\lambda_{exp}^2}E(N) = \frac{\lambda_{Po}}{\lambda_{exp}} + \frac{\lambda_{Po}}{\lambda_{exp}^2}=(10000)(0.1) + (10000)^2(0.1)=10001000,
+\end{aligned}$$
 de manera que su desviacion estandar es la siguinete:  
 $$\sqrt{Var(S)}=\sqrt{10001000}=3162.43577.$$
 La función generadora de momentos de $S$ está dada por
@@ -605,7 +625,7 @@ p1 + theme + xAxis + yAxis + labels.comp + title.comp +
 Esta proximación Lognormal tiene un corrimiento igual $5000$, una media de $4$ y una desviación estándar de $5$.
 
 
-\subsection{1.5 distribucion empirica}
+\subsection{1.5 Distribucion empirica}
 
 La distribución empírica de la severidad total está dada por
 
@@ -714,7 +734,7 @@ scale_size_manual(
 
 \section{Estimacion de la frecuencia y severidad}
 
-\subsection{2.1 simulacion de los pares $\left(T_i,x_i\right)$}
+\subsection{2.1 Simulación de los pares $\left(T_i,x_i\right)$}
 
 Como la frecuencia de los eventos en un año se distribuye Poisson con media $\lambda_{Po}=`r lambda_po`$, entonces las diferencias de tiempo entre las ocurrencias de los eventos siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$, es decir, los tiempos inter-arribos siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$. Simulando los tiempos inter-arribos exponenciales, se puden simular las fechas de ocurrencia de los siniestros a partir de hoy. A continuación se muestran las primeras $5$ y las últimas $5$ realizaciones de las fechas de los siniestros y los montos correspondientes distribuidos exponencialmente con media $1/\lambda_{exp}=`r denom`$:
 
@@ -1435,6 +1455,7 @@ for (i in 1:length(montos)) {
 archivoModif <- data.frame(fechasModif, montosModif)
 eliminados <- (1-(length(archivoModif[[1]])/length(archivo[[1]])))*100
 eliminadosTeoricos <- pexp(deducible, rate = lambda_exp)*100
+eliminadosTeoricos.2 <- pexp(deducible, rate = lambda_exp)
 names(archivoModif) <- c("Fechas","Montos")
 primerasModif <- head(archivoModif, 5)
 kable(primerasModif)
@@ -1450,7 +1471,7 @@ kable(chacadaModif)
 
 
 Como resultado de imponer un deducible y un límite, se ha eliminado un  $`r eliminados`\%$ de registros en el archivo de indemnizaciones. Se aceptó la hipótesis de que los montos de los siniestros provienen de una distribución exponencial de media $`r denom`$, entonces se puede estimar de manera anaítica la proporción de registros eliminados mediante la probabilidad de que el monto de un siniestro se encuentre por debajo del deducible de $`r deducible`$. Esta probabilidad es la siguiente:
-$$ Pr\{M\leq `r deducible`\}=1-e^{-\frac{`r deducible`}{`r denom`}}=`r eliminadosTeoricos`.$$
+$$ Pr\{M\leq `r deducible`\}=1-e^{-\frac{`r deducible`}{`r denom`}}=`r eliminadosTeoricos.2`.$$
 
 \pagebreak
 
@@ -1563,11 +1584,4 @@ EstimAnalitica<-exp(-5000*lambdaMV)*10000
 
 Después de resolver con Solver en Excel, se obtuvo que el parámetro de la distribución exponencial estimado por máxima verosimilitud es $.000076511$ y su media $13,069.95$. Comparada con la media que se obtuvo de los datos, que fue de $13,734.35$, se puede notar que el parámetro estimado considera los efectos de censura y truncamiento adecuadamente.
 
-\subsection{3.3 El percentil $95$ de la severidad}
-
-3.3 Construye un intervalo de confianza para el percentil 95 de la severidad. Compara este intervalo con el equivalente en la pregunta 2 y comenta.
-```{r IC Severidad, echo=FALSE, warning=FALSE} 
-
-```
-
-
+\section{Conclusiones}

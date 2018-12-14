@@ -1,0 +1,55 @@
+---
+title: "Tarea 5 Simulación"
+author: "Bernardo Mondragón Brozon 143743, Karen Delgado Curiel"
+date: "Noviembre 27, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problema 1
+
+Sunponga que $Y|\theta\sim G(1,\theta)$ y que $\theta\sim IG(\alpha,\beta)$.
+\begin{itemize}
+\item Encuentre la distribución posterior de $\theta$.
+\item Encuentre la media y la varianza posterior de $\theta$.
+\item Encuentre la moda posterior de $\theta$.
+\item Escriba dos ecuaciones integrales que se pueden resolver para encuentrar el intervalo de $95\%$ de colas sim'etricas para $\theta$.
+\end{itemize}
+
+\textbf{Solución:}
+
+$$f_{\theta|\underbar x}(\theta)\propto L(\theta|\underbar x)f_{\theta}(\theta)=\theta^{-\alpha-n-1}e^{-\frac{1}{\theta}\left(\sum_{i=1}^{n}x_i+\beta\right)}I_{[0,\infty]}^{(\theta)}$$
+Por lo tanto $\theta|\underbar x\sim IG(\alpha+n,\beta+\sum_{i=1}^{n}x_i)$, de manera que 
+
+$$E(\theta|\underbar x)=\frac{\beta+\sum_{i=1}^{n}x_i}{\alpha+n-1},$$
+$$Var(\theta|\underbar x)=\frac{\left(\beta+\sum_{i=1}^{n}x_i\right)^2}{(\alpha+n-1)^2(\alpha+n-2)}$$
+y
+$$Moda=\frac{\beta+\sum_{i=1}^{n}x_i}{\alpha+n+1}.$$
+
+Sea $(q_a,q_b)$ un intervalo de $95\%$ de confianza de colas simétricas para $\theta|\underbar x$, entonces se satisfacen las siguientes dos ecuaciones:
+
+$$\frac{\alpha}{2}=\int_{0}^{q_a}\frac{\left(\beta+\sum_{i=1}^{n}x_i\right)^{\alpha+n}}{\Gamma (\alpha+n)}\theta^{-\alpha-n-1}e^{-\frac{1}{\theta}\left(\sum_{i=1}^{n}x_i+\beta\right)}d\theta$$
+
+$$\frac{\alpha}{2}=1-\int_{0}^{q_b}\frac{\left(\beta+\sum_{i=1}^{n}x_i\right)^{\alpha+n}}{\Gamma (\alpha+n)}\theta^{-\alpha-n-1}e^{-\frac{1}{\theta}\left(\sum_{i=1}^{n}x_i+\beta\right)}d\theta$$
+
+\begin{flushright}
+$\blacksquare$
+\end{flushright}
+
+# Problema 2
+
+Los siguientes datos corresponden a las horas adicionales de sueño de $10$ pacientes tratados con un somnífero B comparado con un somnífero A.
+
+$$1.2, 2.4,1.3,1.3,0,1,1.8,0.8,4.6,1.4$$
+
+Lleve a cabo un analisis bayesiano de estos datos y extraiga conclusiones, asumiendo que cada componente de la verosimulitud sea:
+\begin{itemize}
+\item Normal
+\item $t_{(3)}$
+\item $t_{(1)}$
+\item Bernoulli (de alguna manera que se les ocurra)
+\end{itemize}
+En este ejercicio, escriban un codigo que para manejar cualquier integracion necesaria y calculo de probabilidades marginales posteriores.
