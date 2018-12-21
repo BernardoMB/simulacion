@@ -11,35 +11,39 @@ output:
 
 <!-- Configure R Markdown file -->
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(cache = TRUE)
+
 # Create beautiful graphs
 #install.packages("ggplot")
 library(ggplot2)
+
 # TeX expressions in graphs labels
 #install.packages("latex2exp")
 library(latex2exp)
+
 # Calculate Kurtosis skew and other functions
 #install.packages("moments")
 library(moments)
+
 # Para knitear
 #install.packages("knitr")
 library(knitr)
+
 # Para imprimir tablas
 #install.packages("kableExtra")
-library(kableExtra)
+#library(kableExtra)
+
 # Para calcular estimadores bootstrap
 #install.packages("bootstrap")
 library(bootstrap)
 
-#install.packages("psych")
-#library(psych)
-
 # Color?
 colorImp <- TRUE
 # Colores chidos
-moradito <- "#be58a0"
-azulito <- "#00e6e6"
+color.primary <- "#be58a0"
+color.secondary <- "#00e6e6"
+set.seed(7031996)
 ```
 
 \section{El modelo colectivo}
@@ -50,24 +54,25 @@ En la teoría del riesgo colectivo, se busca investigar directamente la empresa 
 
 La teoría del riesgo colectivo considera dos problemas principales: encontrar las funciones de distribución de la ganancia total o el monto total de las reclamaciones en una cartera o empresa de riesgo, y encontrar la probabilidad de que la reserva de riesgo de una empresa se agote.
 
-En este trabajo se ilustran los métodos que sigue una compañía aseguradora para obtener la distribución de la severidad total a la que está expuesta a lo largo de un año. Primero, se supondrá una distribución para la frecuencia con la que llegan las reclamaciones y una distribución para cada monto reclamado. De esta manera se pondrán obtener las probabilidades teóricas con las que la compañía estará egresando cantidades anualmente. Después, mediante técnicas de muestreo, se realizarán simulaciones de estas cantidades para obtener distribuciones empíricas a las cuales se les realizarán pruebas de bondad de ajuste para comprobar que efectivamente los datos observados provienen de la distribución propuesta al principio.
+En este trabajo se ilustran los métodos que sigue una compañía aseguradora para obtener la distribución de la severidad total a la que está expuesta a lo largo de un año. Primero, se supondrá una distribución para la frecuencia con la que llegan las reclamaciones y una distribución para cada monto reclamado. De esta manera se pondrán obtener las probabilidades teóricas con las que la compañía estará egresando cantidades anualmente. Después, mediante técnicas de muestreo, se realizarán simulaciones de estas cantidades para obtener distribuciones empíricas a las cuales se les realizarán pruebas de bondad de ajuste para comprobar que efectivamente los datos observados provienen de la distribución propuesta en un principio.
 
-En la práctica, los actuarios no proponen una distribución para la frecuencia y la severidad, sino que ocupan la información de las bases de datos y realizan pruebas para determinar la distribución de los datos capturados. Una vez determinada las distribuciones, realizan las simulaciones bajo diferentes escenarios para analizar el impacto que tienen estos eventos en la situación financiera de la compañía. Cuando no se cuentan con bases de datos, entonces se procede suponiendo distribuciones y ajustándolas bayesianamente conforme se observan más datos. Posteriormente, para calcular probabilidades sobre estas distribuciones se realizan las simulaciones. En este trabajo no se realizará ningún análisis bayesiano sobre las distribuciones.
+En la práctica, los actuarios no proponen una distribución para la frecuencia y la severidad, sino que ocupan la información de las bases de datos y realizan pruebas de bondad de ajuste para determinar la distribución de los datos capturados. Una vez determinada las distribuciones que mejor se ajustan a los datos, se realizan las simulaciones bajo diferentes escenarios para analizar el impacto que tienen estos eventos en la situación financiera de la compañía. 
+
+Cuando no se cuentan con bases de datos, entonces se procede suponiendo distribuciones y ajustándolas bayesianamente conforme se observan más datos. Posteriormente, para calcular probabilidades sobre estas distribuciones se realizan las simulaciones. En este trabajo no se realizará ningún análisis bayesiano sobre las distribuciones, pues se trabaja únicamente con las distribuciones propuestas.
 
 \subsection{La severidad total}
 
 En el proceso de reclamaciones de una aseguradora, la severidad total, que es la cantidad total de dinero que la aseguradora terminará pagando en el periodo de estudio, esta dada por la siguiente cantidad:
 
-$$ S=x_1+x_2+\cdots+x_N  $$
+$$ S=x_1+x_2+\cdots+x_N=\sum_{i=1}^{N}x_i$$
 
-```{r, parameters, include=FALSE}
-set.seed(7031996)
+```{r, parametros del modelo, include=FALSE}
 lambda_po <- 0.1
-denom <- 10000 # Por la parametrizacion de la exponencial
-lambda_exp <- 1/denom
+siniestro.promedio <- 10000 # Por la parametrizacion de la exponencial
+lambda_exp <- 1/siniestro.promedio
 ```
 
-En donde los riesgos $\{x_i\}_{i=1\dots N}$ son variables aleatorias independientes e idénticamente distribuidas que indican los montos de las reclamaciones. Se puede suponer que $x_i$ sigue una distribución exponencial con media $1/\lambda_{exp}=`r denom`$ para toda $i$. Como la llegada de una reclamación a la aseguradora por parte de un asegurado es un suceso extraño, podemos suponer que el proceso de llegada de reclamaciones a la aseguradora es un proceso de Poisson, en donde el número $N$ de reclamaciones que llegan a la aseguradora dentro de un año es variable aleatoria que tiene una distribución Poisson con media $\lambda_{Po}=`r lambda_po`$ independiente de las $x_i$'s, de manera que a lo largo del año se observará en promedio $`r lambda_po`$ reclamaciones.
+En donde los riesgos $\{x_i\}_{i=1\dots N}$ son variables aleatorias independientes e idénticamente distribuidas que indican los montos de las reclamaciones. Se puede suponer que $x_i$ sigue una distribución exponencial con media $1/\lambda_{exp}=`r siniestro.promedio`$ para toda $i$. Como la llegada de una reclamación a la aseguradora por parte de un asegurado es un suceso "extraño", podemos suponer que el proceso de llegada de reclamaciones a la aseguradora es un proceso de Poisson, en donde el número $N$ de reclamaciones que llegan a la aseguradora dentro de un año es variable aleatoria que tiene una distribución Poisson con media $\lambda_{Po}=`r lambda_po`$ independiente de las $x_i$'s, de manera que a lo largo del año se observará en promedio $`r lambda_po`$ reclamaciones.
 
 Por el teorema de probabilidad total, se tiene que 
 
@@ -83,24 +88,25 @@ $$\begin{aligned}
             &= \sum_{n=0}^{\infty}Pr\{N=n\}F_X^{*n}(s).
 \end{aligned}$$
 
-En donde $F_X^{*n}(s)$ es la convolución de las variables aleatorias $\{x_i\}_{i=1\dots N}$, o bien, la función de distribución de probabilidad acumulada de $\sum_{i=n}^{N}x_i$ con $x_i \sim exp(\lambda_{exp}=1/`r  denom`)$. 
-Sean $M_{\sum_{i=n}^{N}x_i}(t)$ y $M_{x_1}(t)$ las funciones generadoras de momentos de las variables aleatorias $\sum_{i=n}^{N}x_i$ y $x_1$ respectivamente, entonces, sin pérdida de generalidad, se tiene que
+En donde $F_X^{*n}(s)$ es la convolución de las variables aleatorias $\{x_i\}_{i=1\dots N}$, o bien, la función de distribución de probabilidad acumulada de $\sum_{i=n}^{N}x_i|N=n$ con $x_i \sim exp(\lambda_{exp}=1/`r  siniestro.promedio`)$. 
+Sean $M_{\sum_{i=n}^{N}x_i|N=n}(t)$ y $M_{x_1}(t)$ las funciones generadoras de momentos de las variables aleatorias $\sum_{i=n}^{N}x_i|N=n$ y $x_1$ respectivamente, entonces, sin pérdida de generalidad, se tiene que
 
-$$M_{\sum_{i=n}^{N}x_i}(t)=\prod_{i=1}^n M_{x_1}(t)=\prod_{i=1}^n\frac{\lambda_{exp}}{\lambda_{exp}+t}=\left(\frac{\lambda_{exp}}{\lambda_{exp}+t}\right)^n=\left(1-\frac{t}{\lambda_{exp}}\right)^{-n}.$$
+$$M_{\sum_{i=n}^{N}x_i|N=n}(t)=\prod_{i=1}^n M_{x_1}(t)=\prod_{i=1}^n\frac{\lambda_{exp}}{\lambda_{exp}+t}=\left(\frac{\lambda_{exp}}{\lambda_{exp}+t}\right)^n=\left(1-\frac{t}{\lambda_{exp}}\right)^{-n}.$$
 
-Lo cual corresponde a la funcion generadora de momentos de una variable aleatoria distribuida Gamma con parámetros de $\alpha = n$ y $\beta = \lambda_{exp}$. Ademas, la distribución de la frecuencia es Poisson con parametros $\lambda_{Po}=`r lambda_po`$, entonces se sigue que
+Lo cual corresponde a la funcion generadora de momentos de una variable aleatoria distribuida Gamma con parámetros de $\alpha = n$ y $\beta = \lambda_{exp}$, de manera que 
+$$F_X^{*n}(s)=\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t.$$
 
-$$F_S(s)=\sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t $$
+Ademas, la distribución de la frecuencia $N$ (el número de siniestros ocurridos) es Poisson con parámetros $\lambda_{Po}=`r lambda_po`$, entonces se sigue que
+
+$$F_S(s)=\sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t. $$
 
 ```{r plot S CDF, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 # CDF Compound Poisson Distribution 
 cdf.comp.pois <- function(x, lambda_po=4,lambda_exp=2) {
-  # Dont take into account terms of the sum that are smaller than the following tolerance 
+  # Dont take into account terms of the sum that are smaller than the following tolerance
   tolerance <- 0.000001
-  
   # Define the region of integration
   B <- c(0, x)
-  
   # Calculate the sum
   # prob starts in zero because the severity is a positive random variable
   # First term
@@ -120,7 +126,9 @@ cdf.comp.pois <- function(x, lambda_po=4,lambda_exp=2) {
 }
 
 # Get values to be ploted
-getValues.cdf.comp.pois <- function(x, lambda_po=4, lambda_exp=2) sapply(x, FUN=cdf.comp.pois, lambda_po=lambda_po,lambda_exp=lambda_exp)
+getValues.cdf.comp.pois <- function(x, lambda_po=4, lambda_exp=2) {
+  sapply(x, FUN=cdf.comp.pois, lambda_po=lambda_po,lambda_exp=lambda_exp)
+}
 
 # Create a plot
 p <- ggplot()
@@ -140,7 +148,7 @@ title.theme <- theme(plot.title = element_text(hjust = 0.5))
 asinth.axis <- geom_hline(yintercept=1, size=.1)
 
 # Color
-if (colorImp) cdf.comp.pois.color=moradito else cdf.comp.pois.color="black"
+if (colorImp) cdf.comp.pois.color=color.primary else cdf.comp.pois.color="black"
 
 # Create layer
 cdf.comp.pois.layer <- stat_function(
@@ -158,13 +166,13 @@ cdf.ylim <- ylim(0.88,1)
 p + xAxis + yAxis + cdf.comp.pois.labels + cdf.comp.pois.title + title.theme + asinth.axis + cdf.comp.pois.layer + cdf.xlim + cdf.ylim
 ```
 
-La funcion de densidad de probabilidad de la severidad total esta dada por
+Derivando la función de distribución de probabilidad acumulada anterior, se obtiene la función de densidad de probabilidad de la severidad total $S$:
 
 $$\begin{aligned}
   f_S(s) &= \frac{d}{ds}F_S(s)  \\
             &= \frac{d}{ds}\sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t \\
             &= \sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!}\frac{d}{ds}\int_0^s \frac{\lambda_{exp}^n}{\Gamma (n)}t^{n-1}e^{-\lambda_{exp}t} \, \mathrm{d}t \\
-            &= \sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!} \frac{\lambda_{exp}^n}{\Gamma (n)}s^{n-1}e^{-\lambda_{exp}s}
+            &= \sum_{n=0}^{\infty}\frac{\lambda_{Po}^n e^{-\lambda_{Po}}}{n!} \frac{\lambda_{exp}^n}{\Gamma (n)}s^{n-1}e^{-\lambda_{exp}s}.
 \end{aligned}$$
 
 ```{r plot S PDF, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
@@ -196,7 +204,7 @@ pdf.comp.pois.labels <- labs(x = TeX('$s$'), y = TeX('$f_S(s)$'))
 pdf.comp.pois.title <- ggtitle("Función de densidad de probabilidad \n de la severidad total")
 
 # Color
-if (colorImp) pdf.comp.pois.color <- azulito else pdf.comp.pois.color <- "black"
+if (colorImp) pdf.comp.pois.color <- color.secondary else pdf.comp.pois.color <- "black"
 
 # Create layer
 pdf.comp.pois.layer <- stat_function(
@@ -221,14 +229,16 @@ percentiles <- c(0,1,50,100,1000,10000,20000,40000,50000)
 probs <- sapply(percentiles, FUN=cdf.comp.pois, lambda_po=lambda_po, lambda_exp=lambda_exp)
 percentiles.df <- data.frame(percentiles, probs)
 names(percentiles.df) <- c("s","F(s)")
-kable(percentiles.df)
+kableExtra::kable(percentiles.df)
 ```
 
-Como se puede observar, casi toda la probabilidad se acumula en valores muy pequeños para la severidad total.
+Como se puede observar, casi toda la probabilidad se acumula en valores muy pequeños para la severidad total. Esto se debe a que el número promedio de siniestros ocurridos $\lambda_{Po}=`r lambda_po`$ es muy pequeño y la distribución de cada uno de los montos a indeminizar de los siniestros ocuridos siguie una distribución exponencial. 
 
-\subsection{Simulación}
+\subsection{Simulación de frecuencia y severidad}
 
-Para hacer simulaciones de la severidad total, primero hay que simular el número $N$ de siniestros ocurridos, el cual proviene de la distribución de Poisson con media $\lambda_{Po}=`r lambda_po`$. Una vez simulado el número $N$ de siniestros, se simulan $N$ siniestros, que son variables aleatorias exponenciales con parámetros $\lambda_{exp}=1/`r denom`$. Después de obtener los $N$ siniestros, se suman y de esta manera se obtiene un primer valor de la severidad total. Para concluir con la simulación, se repite el proceso anterior $10000$ veces. A continuación se muestran los primeros $100$ valores obtenidos de la simulacion:
+Para hacer simulaciones de la severidad total, primero hay que simular el número $N$ de siniestros ocurridos, el cual proviene de la distribución de Poisson con media $\lambda_{Po}=`r lambda_po`$. Una vez simulado el número $N$ de siniestros, se simulan $N$ siniestros, que son variables aleatorias exponenciales con parámetros $\lambda_{exp}=1/`r siniestro.promedio`$. Después de obtener los $N$ siniestros, se suman y de esta manera se obtiene un primer valor de la severidad total. Para concluir con la simulación, se repite el proceso anterior $10000$ veces. 
+
+A continuación se muestran los primeros $100$ valores obtenidos de la simulacion:
 
 ```{r simulated values, echo=FALSE, warning=FALSE, message=FALSE}
 severities <- c()
@@ -244,15 +254,14 @@ for(i in 1:n) {
 }
 # Imprimiendo solo 100
 kable(matrix(severities[1:100],9))
-
 ```
 
-El histograma debe parecerse a la función de densidad de probabilidad (la linea punteada indica la seveidad promedio):
+El histograma de los valores obtenidos por simulación debe ajustarse a la función de densidad de probabilidad (la linea punteada indica la severidad promedio):
 
 ```{r histogram, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 if (colorImp) {
-  hist.color <- moradito
-  hist.fill <- moradito
+  hist.color <- color.primary
+  hist.fill <- color.primary
   hist.alpha <- "0.2"
 } else {
   hist.color <- "black"
@@ -265,8 +274,8 @@ breaks <- seq(1, 80000, by=1000)
 hist.p <- ggplot(data=severities.df, aes(x=severities)) +
   geom_histogram(breaks=breaks, color=hist.color, fill=hist.fill, alpha=hist.alpha) + 
   labs(x = TeX('Severidad total$'), y = TeX('Frecuencia')) +
-  ggtitle("Histograma") + title.theme + geom_vline(xintercept = mean(severities), linetype="dotted", 
-                color = "cyan", size=1.5)
+  ggtitle("Histograma de la severidad total S") + title.theme + geom_vline(xintercept = mean(severities), linetype="dashed", 
+                color = color.secondary, size=1)
 hist.p
 ```
 
@@ -282,7 +291,7 @@ hist.p2
 # https://stat.ethz.ch/pipermail/r-help/2011-June/280588.html
 ```
 
-\subsection{Distribucion empirica}
+\subsection{Distribución empírica}
 
 La distribución empírica de la severidad total está dada por
 
@@ -292,15 +301,18 @@ theme <- theme(
   # Center plot title
   plot.title = element_text(hjust = 0.5)
 )
-if (colorImp) emp.color <- azulito else emp.color <- "black"
+if (colorImp) emp.color <- color.secondary else emp.color <- "black"
 ggplot() + stat_ecdf(data=df, aes(x=severities), geom = "step", color=emp.color) +
   labs(x = TeX('$s$'), y = TeX('$F_{S_n}(s)$')) + asinth.axis + xAxis + yAxis +
   ggtitle("distribución empírica de la severidad total") + theme + cdf.ylim
 ```
 
-Entonces, un intervalo de confianza a un nivel de $(1-\alpha)100\%$ para distribución de la serveridad total $F_{S}(s)$ está dado por
+Mediante el Teorema de Glivenko-Cantelli se utiliza la aproximación normal para obtener intervalos de confianza a un nivel de $(1-\alpha)100\%$ para distribución de la severidad total $F_{S}(s)$. Entonces, para cualquier nivel de confianza, estos intervalos están dados por
+
 $$\left(F_{s_n}(s)-\sqrt\frac{\ln\frac{2}{\alpha}}{2n}, F_{s_n}(s)+\sqrt\frac{\ln\frac{2}{\alpha}}{2n}\right)$$
+
 Si se construyen los intervalos de confianza al $95\%$ para $F_S(s)$ utilizando la distribución empírica se tiene lo siguiente:
+
 ```{r, echo=FALSE, warning=FALSE}
 Fn <- c(1:10000)
 ordenados <- sort(severities)
@@ -389,104 +401,142 @@ scale_size_manual(
 
 ```
 
-
 \subsection{Comparación de los valores reales con los estimados}
 
-Se vio que la severidad total, que sigue uns distribucion de Poisson Compuesta, está dada por
+Se vio que la severidad total, que sigue una distribución de Poisson Compuesta, está dada por
+
 $$  S=\sum_{i=1}^{N}x_i.$$
-Entonces el valor esperado de la severidad total está dado por
+Entonces, mediante la ley de esperanzas iteradas, el valor esperado de la severidad total está dado por
+
+```{r caracteristicas de la severidad total, echo=FALSE}
+mean.total.severity <- lambda_po/lambda_exp
+var.total.severity <- 2*((1/lambda_exp)^2)*lambda_po
+sd.total.severity <- sqrt(var.total.severity)
+skewness.total.severity <- lambda_po*(6/(lambda_exp^3))
+pearson.skewness.coef.total.severity <- (1/sqrt(lambda_po))*((6/(lambda_exp^3))/( 2/(lambda_exp^2))^(3/2))
+kurtosis.total.severity <- ((lambda_po^4+12*lambda_po^3+36*lambda_po^2+24*lambda_po)/(lambda_exp^4))/((2*(lambda_po/(lambda_exp^2)))^2)
+```
+
 $$\begin{aligned}
-  E(S) &= E\left(\sum_{i=1}^{N}x_i\right)=E(E(S|N=n))=E\left(\sum_{i=1}^{n}x_i\bigg\rvert N=n\right)=E(NE(x_1))  \\
-            &= E\left(N\left(\frac{1}{\lambda_{exp}}\right)\right)=\frac{1}{\lambda_{exp}E(N)}=\frac{\lambda_{exp}}{\lambda_{Po}}=\frac{10000}{0.1}=1000
+E(S) &= E\left(\sum_{i=1}^{N}x_i\right)=E(E(S|N=n))=E\left(E\left(\sum_{i=1}^{n}x_i\bigg\rvert N=n\right)\right) \\
+&= E(NE(x_1))=E\left(N\left(\frac{1}{\lambda_{exp}}\right)\right) \\
+&=\frac{E(N)}{\lambda_{exp}}=\frac{\lambda_{Po}}{\lambda_{exp}}=\frac{`r lambda_po`}{`r lambda_exp`}=`r mean.total.severity`
 \end{aligned}$$
+
 y su varianza está dada por
+
 $$\begin{aligned}
-  Var(S) &= Var(E(S|N)) + E(Var(S|N)) = Var(NE(x_1))+E(NVar(x_1)) \\
-            &=\frac{1}{\lambda_{exp}}Var(N) + \frac{1}{\lambda_{exp}^2}E(N) = \frac{\lambda_{Po}}{\lambda_{exp}} + \frac{\lambda_{Po}}{\lambda_{exp}^2}=(10000)(0.1) + (10000)^2(0.1)=10001000,
+Var(S) &= Var(E(S|N)) + E(Var(S|N)) = Var(NE(x_1))+E(NVar(x_1)) \\
+&= \frac{1}{\lambda_{exp}^2}Var(N) + \frac{1}{\lambda_{exp}^2}E(N) = \frac{\lambda_{Po}}{\lambda_{exp}^2} + \frac{\lambda_{Po}}{\lambda_{exp}^2} \\
+&= 2\left(\frac{\lambda_{Po}}{\lambda_{exp}^2}\right)=2\left(\frac{`r lambda_po`}{{`r lambda_exp`}^2}\right)=`r var.total.severity`,
 \end{aligned}$$
-de manera que su desviacion estandar es la siguinete:  
-$$\sqrt{Var(S)}=\sqrt{10001000}=3162.43577.$$
+
+de manera que su desviacion estandar es la siguinete:
+
+$$\sqrt{Var(S)}=\sqrt{`r sd.total.severity`}=`r sd.total.severity`.$$
+
 La función generadora de momentos de $S$ está dada por
+
 $$M_{S}(t)=E\left(e^{N\ln\left(e^{x_{1}t}\right)}\right)=M_{N}(\ln\left(x_{1}t\right))=e^{\lambda_{Po}\left(\frac{\lambda_{exp}}{\lambda_{exp}+t}-1\right)} $$
 
-se sigue que el sesgo de la distribucion es positivo y está dado por
-$$E\left((S-E(S))^3\right)=\lambda_{Po}E(x_1^3)=\lambda_{Po}M^{(3)}_{x_1}(0)=\lambda_{Po}\frac{6}{\lambda_{exp}^3}=(0.1)(6)(10000)^3=6\times 10^{11},$$
-y el coeficiente de Kurtosis es
-$$ \frac{E(S^4)}{Var(S)^2}=\frac{M_{s}^{(4)}(0)}{\left(\frac{\lambda_{Po}}{\lambda_{exp}} + \frac{\lambda_{Po}}{\lambda_{exp}^2}\right)^2}=\frac{\frac{\lambda_{Po}^4+12\lambda_{Po}^3+36\lambda_{Po}^2+24\lambda_{Po}}{\lambda_{exp}^4}}{10001000^2}=\frac{\frac{(0.1)^4+12(0.1)^3+36(0.1)^2+24(0.1)}{(1/10000)^4}}{10001000^2}=277.1545. $$
+se sigue que el sesgo de la distribución es positivo y está dado por
 
-Con valores simulados, se tienen las siguientes estimaciones para la severidad total
+$$\begin{aligned}
+E\left((S-E(S))^3\right) &= \lambda_{Po}E(x_1^3)=\lambda_{Po}M^{(3)}_{x_1}(0)=\lambda_{Po}\left(\frac{6}{\lambda_{exp}^3}\right) \\
+&= `r lambda_po`\left(\frac{6}{{`r lambda_exp`}^3}\right)=`r skewness.total.severity`,
+\end{aligned}$$
 
-```{r estimadores bootstrap, echo=FALSE}
+de manera que el coeficiente de sesgo de Pearson esta dado por
+
+$$\begin{aligned}
+\gamma_{S} &= \frac{1}{\sqrt{\lambda_{Po}}}\frac{E\left(x_1^3\right)}{E\left(x_1^2\right)^{\frac{3}{2}}}=\frac{1}{\sqrt{\lambda_{Po}}}\frac{M^{(3)}_{x_1}(0)}{ E(x_1^2)^{\frac{3}{2}}}=\frac{1}{\sqrt{\lambda_{Po}}}\frac{\frac{6}{\lambda_{exp}^3}}{\left(\frac{2!}{\lambda_{exp}^2}\right)^{\frac{3}{2}}} \\
+&= \frac{1}{\sqrt{`r lambda_exp`}}\frac{\frac{6}{{`r lambda_po`}^3}}{\left(\frac{2!}{{`r lambda_exp`}^2}\right)^{\frac{3}{2}}}=`r pearson.skewness.coef.total.severity`.
+\end{aligned}$$
+
+El coeficiente de Curtosis es
+
+$$\begin{aligned}
+\frac{E(S^4)}{Var(S)^2} &= \frac{M_{s}^{(4)}(0)}{\left(2\left(\frac{\lambda_{Po}}{\lambda_{exp}^2}\right)\right)^2}=\frac{\frac{\lambda_{Po}^4+12\lambda_{Po}^3+36\lambda_{Po}^2+24\lambda_{Po}}{\lambda_{exp}^4}}{\left(2\left(\frac{\lambda_{Po}}{\lambda_{exp}^2}\right)\right)^2} \\
+&= \frac{\frac{{`r lambda_po`}^4+12(`r lambda_po`)^3+36(`r lambda_po`)^2+24(`r lambda_po`)}{(`r lambda_exp`)^4}}{\left(2\left(\frac{`r lambda_po`}{(`r lambda_exp`)^2}\right)\right)^2}=`r kurtosis.total.severity`.
+\end{aligned}$$
+
+Con los obtenidos por simulación, se tienen las siguientes estimaciones para la severidad total
+
+```{r estimadores bootstrap de la severidad total, echo=FALSE}
 # Media
 theta1 <- function(x){mean(x)}
 results <- bootstrap::bootstrap(severities,10000,theta1) 
-mu1=mean(results[["thetastar"]])
+bootstrap.mean.total.severity=mean(results[["thetastar"]])
 
 # Varianza
 theta2 <- function(x){mean(x^2)-(mean(x)^2)}
 results2 <- bootstrap::bootstrap(severities,10000,theta2) 
-var1=mean(results2[["thetastar"]])
+bootstrap.variance.total.severity=mean(results2[["thetastar"]])
 
 # Sesgo
 theta3 <- function(x){mean((x-mean(x))^3)}
 results3 <- bootstrap::bootstrap(severities,10000,theta3) 
-ses1=mean(results3[["thetastar"]])
+bootstrap.skew.total.severity=mean(results3[["thetastar"]])
 
 # Kurtosis
 theta4 <- function(x){mean(x^4)/(var(x)^2)}
 results4 <- bootstrap::bootstrap(severities, 10000, theta4)
-kurt1=mean(results4[["thetastar"]])
+bootstrap.kurtosis.total.severity=mean(results4[["thetastar"]])
 ```
 
-```{r estimaciones jack-knife, echo=FALSE}
+```{r estimaciones jack-knife de la severidad total, echo=FALSE}
 # Media
 JKMean <- NULL
 for(i in 1:10000) {
   JKMean[i]= (sum(severities)-severities[i])/(10000-1)
 }
-JKMean1=mean(JKMean)
+jackknife.mean.total.severity=mean(JKMean)
 
 # Varianza
 JKVar <- NULL
 for(i in 1:10000) {
   JKVar[i] = (var(severities[-i]))
 }
-JKVar1=mean(JKVar)
+jackknife.variance.total.severity=mean(JKVar)
 
 # Sesgo
-JKBias <- NULL
+JKSkew <- NULL
 for(i in 1:10000) {
-  JKBias[i] = mean((severities[-i]-mean(severities))^3)
+  JKSkew[i] = mean((severities[-i]-mean(severities))^3)
 }
-JKBias1=mean(JKBias)
+jackknife.skew.total.severity=mean(JKSkew)
 
 # Kurtosis
 JKKurtosis <- NULL
 for(i in 1:10000) {
   JKKurtosis[i] = kurtosis(severities[-i])
 }
-JKKurtosis1=mean(JKKurtosis)
+jackknife.kurtosis.total.severity=mean(JKKurtosis)
 ```
 
 ```{r comparando con valores estimados, echo=FALSE}
-value <- c("Media","Varianza","Sesgo","Kurtosis")
+options(scipen=999)
+value <- c("Media","Varianza","Sesgo","Curtosis")
 formula <- c("$\\bar{s}=\\frac{1}{n}\\sum_{i=0}^{n}s_i$","$\\frac{1}{n-1}\\sum_{i=0}^{n}\\left(s_i-\\bar{s}\\right)$","${\\frac{{\\tfrac {1}{n}}\\sum _{i=1}^{n}(x_{i}-{\\overline{x}})^{3}}{\\left({\\tfrac {1}{n-1}}\\sum _{i=1}^{n}(x_{i}-{\\overline{x}})^{2}\\right)^{3/2}}}$","${\\frac{{\\tfrac{1}{n}}\\sum _{i=1}^{n}(s_{i}-{\\overline {s}})^{4}}{\\left({\\tfrac{1}{n}}\\sum _{i=1}^{n}(s_{i}-{\\overline {s}})^{2}\\right)^{2}}}-3$")
-real <- c(1000,10001000,"$6\\times10^{11}$",277.1545)
-estimate <- c(mean(severities),var(severities),skewness(severities),kurtosis(severities))
-boots <- c(mu1, var1, ses1, kurt1)
-jacks <- c(JKMean1, JKVar1, JKBias1, JKKurtosis1)
-df.values <- data.frame(value, formula, real, estimate, boots, jacks)
-names(df.values) <- c("Valor","Formula","Real   ","Estimado   ","Bootstrap   ","Jackknife")
-kable(df.values)
+real.values <- c(mean.total.severity,var.total.severity,pearson.skewness.coef.total.severity,kurtosis.total.severity)
+estimate.values <- c(mean(severities),var(severities),skewness(severities),kurtosis(severities))
+bootstrap.values <- c(bootstrap.mean.total.severity, bootstrap.variance.total.severity, bootstrap.skew.total.severity, bootstrap.kurtosis.total.severity)
+jackknife.values <- c(jackknife.mean.total.severity, jackknife.variance.total.severity, jackknife.skew.total.severity, jackknife.kurtosis.total.severity)
+df.values <- data.frame(value, real.values, estimate.values, bootstrap.values, jackknife.values)
+names(df.values) <- c("Valor","Real","Estimado","Bootstrap","Jackknife")
+knitr::kable(df.values)
 ```
 
 \subsection{Aproximación de la distribución de la severidad total}
 
 La función de distribución Poisson Compuesta puede ser aproximada mediante una distribución Gamma trasladada con los siguientes parámetros: 
+
 $$\alpha=\frac{4\lambda_{Po}E\left(x_1^{2}\right)^3}{E\left(x_1^3\right)^2}=\frac{4\lambda_{Po}\left(\frac{2}{\lambda_{exp}^2}\right)^3}{\left(\frac{6}{\lambda_{exp}^3}\right)^2}=\frac{4}{45}, \quad \beta=\frac{2E\left(x_1^2\right)}{E\left(x_1^3\right)}=\frac{2\left(\frac{2}{\lambda_{exp}^2}\right)}{\left(\frac{6}{\lambda_{exp}^3}\right)}=\frac{1}{15000}$$
 
 y un desplazamiento
+
 $$x_0=\lambda_{Po}E\left(x_1\right)-\frac{2\lambda_{Po}E(x_1^2)^2}{E(x_1^3)}=\lambda_{Po}\left(\frac{1}{\lambda_{exp}}\right)-\frac{2\lambda_{Po}\left(\frac{2}{\lambda_{exp}^2}\right)^2}{\left(\frac{6}{\lambda_{exp}^3}\right)}=-\frac{1000}{3}$$
+
 Observe que la aproximación es buena para valores distantes de la media de la distribución Poisson Compuesta: 
 ```{r densidad vs aproximacion gamma, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 # PDF Gamma Trasladada
@@ -537,7 +587,7 @@ pdf.gam.layer <- stat_function(
 )
 # Colors and line types
 if (colorImp) {
-  aprox.color <- moradito
+  aprox.color <- color.primary
   colors <- c(pdf.comp.pois.color,aprox.color)
   sizes <- c(.5,.5)
   linetypes <-c(1,1)
@@ -574,9 +624,17 @@ comp.p + comp.theme + xAxis + yAxis + pdf.comp.pois.labels + comp.title + pdf.xl
   )
 
 ```
+
 Para valores cercanos a la media es mas conveniente aproximar la distribucion Poisson Compuesta con una distribucion Normal con los siguientes parametros: 
+
 $$\mu=E(N)E(X_1)=\frac{\lambda_{Po}}{\lambda_{exp}}=(0.1)(10000)=1000, $$
-$$\sigma^2={E(x_1)}Var(N) + Var(x_1)E(N) = \frac{\lambda_{Po}}{\lambda_{exp}} + \frac{\lambda_{Po}}{\lambda_{exp}^2}=(10000)(0.1) + (10000)^2(0.1)=10001000$$
+
+$$\begin{aligned}
+\sigma^2 &= Var(E(S|N)) + E(Var(S|N)) = Var(NE(x_1))+E(NVar(x_1)) \\
+&= \frac{1}{\lambda_{exp}^2}Var(N) + \frac{1}{\lambda_{exp}^2}E(N) = \frac{\lambda_{Po}}{\lambda_{exp}^2} + \frac{\lambda_{Po}}{\lambda_{exp}^2} \\
+&= 2\left(\frac{\lambda_{Po}}{\lambda_{exp}^2}\right)=2\left(\frac{`r lambda_po`}{{`r lambda_exp`}^2}\right)=`r var.total.severity`,
+\end{aligned}$$
+
 Sin embargo, esto solo funciona para valores grandes de $\lambda_{Po}$. En el siguinete gráfico se muestra que la aproximación Normal para valores alrededor de la media es bastante mala, pues como $\lambda_{Po}$ es pequeña la media de la suma de variables aleatorias no corverge a la media de la aproximación Normal:
 
 ```{r densidad vs aproximacion normal, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
@@ -659,7 +717,7 @@ pdf2 <- stat_function(
 )
 # Colors and line types
 if (colorImp) {
-  aprox.color <- moradito
+  aprox.color <- color.primary
   colors <- c(pdf.comp.pois.color,aprox.color)
   sizes <- c(.5,.5)
   linetypes <-c(1,1)
@@ -759,11 +817,11 @@ p1 + theme + xAxis + yAxis + labels.comp + title.comp +
 
 Esta proximación Lognormal tiene un corrimiento igual $5000$, una media de $4$ y una desviación estándar de $5$.
 
-\section{Estimacion de la frecuencia y severidad}
-
+\section{Estimación de la frecuencia y severidad}
+  
 \subsection{Simulación de los pares $\left(T_i,x_i\right)$}
 
-Como la frecuencia de los eventos en un año se distribuye Poisson con media $\lambda_{Po}=`r lambda_po`$, entonces las diferencias de tiempo entre las ocurrencias de los eventos siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$, es decir, los tiempos inter-arribos siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$. Simulando los tiempos inter-arribos exponenciales, se puden simular las fechas de ocurrencia de los siniestros a partir de hoy. A continuación se muestran las primeras $5$ y las últimas $5$ realizaciones de las fechas de los siniestros y los montos correspondientes distribuidos exponencialmente con media $1/\lambda_{exp}=`r denom`$:
+Como la frecuencia de los eventos en un año se distribuye Poisson con media $\lambda_{Po}=`r lambda_po`$, entonces las diferencias de tiempo entre las ocurrencias de los eventos siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$, es decir, los tiempos inter-arribos de reclamaciones siguen una distribución exponencial con media $1/\lambda=\lambda_{Po}=`r lambda_po`$. Simulando los tiempos inter-arribos exponenciales, se puden simular las fechas de ocurrencia de los siniestros a partir de hoy. A continuación se muestran las primeras $5$ y las últimas $5$ realizaciones de las fechas de los siniestros y los montos correspondientes (reclamaciones) distribuidos exponencialmente con media $1/\lambda_{exp}=`r siniestro.promedio`$:
 
 ```{r simulated pairs, echo=FALSE, warning=FALSE, message=FALSE}
 start  <- 2018
@@ -952,8 +1010,8 @@ Dado el numero de observaciones (simulaciones) $n=10000$, se tiene que la funci�
 Agrupando los montos de los siniestros en intervalos de longitud $5000$, se obtiene el siguinete histograma:
 ```{r histograma severidad, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 if (colorImp) {
-  hist.color <- moradito
-  hist.fill <- moradito
+  hist.color <- color.primary
+  hist.fill <- color.primary
   hist.alpha <- "0.2"
 } else {
   hist.color <- "black"
@@ -978,7 +1036,7 @@ pdf.sev.layer <- stat_function(
   aes(x=c(0,10)),
   fun=dexp,
   args=list(rate=lambda_exp),
-  color=azulito
+  color=color.secondary
 )
 
 hist.p2.sev <- ggplot() + xAxis + yAxis + title.theme + pdf.xlim + ylim(0,.0001) + geom_histogram(data=montos.df, aes(x=montos, y=.00000002*..count..), breaks=breaks, color=hist.color, fill=hist.fill, alpha=hist.alpha) + pdf.sev.layer +
@@ -991,9 +1049,9 @@ hist.p2.sev
 
 Sea $M$ la variable aleatoria que indica el monto de un siniestro, entonces el valor esperado de $M$ limitado a $l$ está dada por
 
-$$  E\left( \min{M, l} \right)=\int_{0}^{l}S_{x_1}(t) \, \mathrm{d}t=\int_{0}^{l} e^{-\lambda_{exp}t} \, \mathrm{d}t = \frac{1-e^{-\lambda_{exp}l}}{\lambda_{exp}} $$
+$$E\left(\min{M, l}\right)=\int_{0}^{l}S_{x_1}(t)\,\mathrm{d}t=\int_{0}^{l} e^{-\lambda_{exp}t}\,\mathrm{d}t=\frac{1-e^{-\lambda_{exp}l}}{\lambda_{exp}}$$
 
-A continuacion se presenta a la \textbf{media limitada} de los montos como funcion del limite:
+A continuación se presenta a la \textbf{media limitada} de los montos como función del límite:
 
 ```{r media limitada, echo=FALSE, warning=FALSE, message=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
 sortedSeverities <- sort(unique(montos))
@@ -1045,7 +1103,7 @@ theme <- theme(
  an <- labs(TeX('Valores simulados'), TeX('Media limitada'))
  
  if (colorImp) {
-   colors <- c(moradito,azulito)
+   colors <- c(color.primary,color.secondary)
    sizes <- c(.3,1)
    linetypes <- c(1,1)
  } else {
@@ -1078,7 +1136,7 @@ theme <- theme(
  )
 ```
 
-Como los montos son distribuidos exponencialmente con media $E(x_1)=1/\lambda_{exp}$, no se observan indicios de una distribucion de cola pesada.
+Como los montos son distribuidos exponencialmente con media $E(x_1)=1/\lambda_{exp}$, no se observan indicios de una distribución de cola pesada.
  
  La \textbf{media en exceso} como funcion del umbral es la siguiente:
 
@@ -1155,7 +1213,7 @@ Como los montos son distribuidos exponencialmente con media $E(x_1)=1/\lambda_{e
 
 Claramente los montos de los siniestros no son un fenomeno de colas pesadas, pues se observa que la media en exceso descrece.
  
-La \text{mortalidad empirica} como funcion del monto es la siguiente:
+La \text{mortalidad empirica} como función del monto es la siguiente:
 
 ```{r mortalidad empirica, echo=FALSE, warning=FALSE, fig.width=4.5, fig.height=3, fig.align = "center"}
  # Mortalidad utilizando datos empirica
@@ -1229,7 +1287,7 @@ La \text{mortalidad empirica} como funcion del monto es la siguiente:
  )
 ```
 
-\subsection{Prueba Ji-Cuadrada de Pearson}
+\subsection{Prueba Ji-Cuadrada de Pearson para la severidad}
 
 Se agrupan los datos de tal forma que todas las frecuencias de los datos observados sean mayores a 5:
 
@@ -1292,7 +1350,7 @@ test<-qchisq(.95,gl)
 Rechazar <- sumaQ > test
 ```
 
-Realizando la prueba Ji-Cuadrada, se tiene que la estadistica de prueba toma el siguite valor:
+Realizando la prueba Ji-Cuadrada, se tiene que la estadística de prueba toma el siguite valor:
 $$Q=`r sumaQ` < \chi_{(`r gl`),0.05}^2 = `r test`$$
 
 
@@ -1305,20 +1363,20 @@ ggplot(data=data.frame(num=c("1","2","3"))) +
     args = list(df = gl),
     xlim = c(test, 40),
     geom = "area",
-    fill = moradito,
+    fill = color.primary,
     color = "transparent",
     alpha = ".5"
     ) +
 stat_function(
   fun = dchisq,
   args = list(df = gl),
-  color = moradito
+  color = color.primary
 ) +
 geom_vline(
   aes(
     xintercept = sumaQ
   ),
-  color = azulito
+  color = color.secondary
 ) +
 geom_vline(
   aes(
@@ -1420,7 +1478,7 @@ StatQqLine <- ggproto("StatQqLine", Stat,
 )
 
 ggplot(data = data.frame(y = montosOrdenados), aes(sample = y)) + 
-  geom_qq(distribution = qexp, dparams = list(rate = lambda_exp), color = moradito) + geom_qq_line(distribution = qexp, dparams = list(rate = lambda_exp)) + xlab(TeX("Cuantiles $exp(\\lambda_{exp})$")) + ylab(TeX("Montos")) + ggtitle("Q-Q Plot") + theme
+  geom_qq(distribution = qexp, dparams = list(rate = lambda_exp), color = color.primary) + geom_qq_line(distribution = qexp, dparams = list(rate = lambda_exp)) + xlab(TeX("Cuantiles $exp(\\lambda_{exp})$")) + ylab(TeX("Montos")) + ggtitle("Q-Q Plot") + theme
 ```
 
 
@@ -1441,7 +1499,7 @@ limsuperior <- tasa+desviacion
 ```
 Suponiendo que la frecuencia de los siniestros se distribuye Poisson, entonces, estimando por máxima verocimilitud se obtiene que, en promedio, ocurren 
 $$\widehat{\lambda}_{MV}=\frac{1}{T}\sum_{j=0}^{T}N_i=\frac{1}{`r floor(max(tiempoEnAnios))`}\sum_{j=0}^{`r floor(max(tiempoEnAnios))`}N_i=`r tasa` $$
-siniestros al año. En donde $T$ es el total de años sobre los cuales se tiene información y $N_j$ es el número de siniestros que ocurrieron en el $j$-ésimo año. Además, dados estos valores se tiene que un intervalo al $95\%$ de confianza para el parámetro de esta distribución Poisson es el siguiente
+siniestros al año. En donde $T$ es el total de años sobre los cuales se tiene información y $N_j$ es el número de siniestros que ocurrieron en el $j$-ésimo año. Además, dados estos valores se tiene que un intervalo al $95\%$ de confianza para el parámetro de esta distribución Poisson es el siguiente:
 
 $$\widehat{\lambda}\pm 1.96 \sqrt{\dfrac{\widehat{\lambda}}{n}}=`r tasa`\pm `r desviacion` =(`r liminferior`,`r limsuperior`).$$
 
@@ -1449,7 +1507,7 @@ $$\widehat{\lambda}\pm 1.96 \sqrt{\dfrac{\widehat{\lambda}}{n}}=`r tasa`\pm `r d
 
 \subsection{Efectos de un deducible y un límite}
 
-Sobre los 10000 siniestros simulados se considera que aplicarán un deducible de $5,000$ y un límite de $30,000$. El archivo de indemnizaciones tendrá, entonces, el siguiente aspecto:
+Si se aplica un deducible de $5,000$ y un límite de $30,000$, entonces el archivo de indemnizaciones tendrá el siguiente aspecto:
 ```{r montos simulados, echo=FALSE, warning=FALSE}
 ##TRUNCAMIENTO
 Indem<-montos
@@ -1496,9 +1554,9 @@ names(chacadaModif) <- c("Fechas", "Montos")
 kable(chacadaModif)
 ```
 
+Como resultado de imponer un deducible y un límite, se ha eliminado un  $`r eliminados`\%$ de registros en el archivo de indemnizaciones. Se aceptó la hipótesis de que los montos de los siniestros provienen de una distribución exponencial de media $`r siniestro.promedio`$, entonces se puede estimar de manera anaítica la proporción de registros eliminados mediante la probabilidad de que el monto de un siniestro se encuentre por debajo del deducible de $`r deducible`$. Esta probabilidad es la siguiente:
 
-Como resultado de imponer un deducible y un límite, se ha eliminado un  $`r eliminados`\%$ de registros en el archivo de indemnizaciones. Se aceptó la hipótesis de que los montos de los siniestros provienen de una distribución exponencial de media $`r denom`$, entonces se puede estimar de manera anaítica la proporción de registros eliminados mediante la probabilidad de que el monto de un siniestro se encuentre por debajo del deducible de $`r deducible`$. Esta probabilidad es la siguiente:
-$$ Pr\{M\leq `r deducible`\}=1-e^{-\frac{`r deducible`}{`r denom`}}=`r eliminadosTeoricos.2`.$$
+$$ Pr\{M\leq `r deducible`\}=1-e^{-\frac{`r deducible`}{`r siniestro.promedio`}}=`r eliminadosTeoricos.2`.$$
 
 \pagebreak
 
@@ -1553,7 +1611,9 @@ theme
 La línea azul claro indica el valor de la media en exceso con un umbral de $`r deducible`$.
 
 \subsection{Estimación para montos con deducible y límite}
+
 Primero vamos a definir la función con el deducible de $5,000$ y un límite de $30,000$
+
 $$
 y(x) = \begin{cases}
   0 & x\leq 5,000\\
@@ -1579,10 +1639,15 @@ Un vez teniendo bien definidas funciones de Distribución y Densidad, podemos ha
 $$L(\lambda) =   \left(\frac{1- F_{x}(25000)}{1- F_{x}(5000)}\right)^a \cdot\prod_{i=1}^b \frac{f_{x}(y_{i} + 5000)}{1-F_{x(5000)}}$$
 
 Ahora, sustituyendo los valores de la función definida, se tiene que:
+
 $$L(\lambda) = \left(\frac{e^{-\lambda(25000)}}{e^{-\lambda(5000)}}\right)^a\cdot\prod_{i=1}^b \frac{\lambda e^{-\lambda(y_{i} + 5000)}}{e^{-\lambda(5000)}}$$
+
 sacando Logaritmo a la función:
+
 $$\ln(\lambda) = a(-\lambda(25000) + \lambda(5000)) + \sum_{i=1}^b \left( \ln(\lambda)-\lambda(y_{i} + 5000) + \lambda(5000)a\right)$$  
+
 Agrupando los terminos comunes llegamos a la función a maximizar
+
 $$l(\lambda) = a(-\lambda(2000)) +  b(\ln(\lambda)) - \sum_{i=1}^by_{i}$$
 
 
