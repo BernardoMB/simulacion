@@ -32,7 +32,7 @@ library(knitr)
 
 # Para imprimir tablas
 #install.packages("kableExtra")
-#library(kableExtra)
+library(kableExtra)
 
 # Para calcular estimadores bootstrap
 #install.packages("bootstrap")
